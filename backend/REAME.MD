@@ -1,59 +1,140 @@
-# Control de Visitantes IIGE
+# 📋 Control de Visitantes - IIGE
 
-## Requisitos Previos
+Sistema de backend para el control y registro de visitantes en el Instituto de Investigación Geológico y Energético (IIGE), desarrollado con Node.js, Express y PostgreSQL.
 
-- [Node.js](https://nodejs.org/) (versión recomendada: 16.x o superior)
-- [Git](https://git-scm.com/)
+---
+
+## 🚀 Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- [Node.js](https://nodejs.org/) (recomendado: v16 o superior)
 - [npm](https://www.npmjs.com/)
+- [Git](https://git-scm.com/)
+- [PostgreSQL](https://www.postgresql.org/)
 
-## Instalación
+---
 
-1. **Clona el repositorio:**
+## ⚙️ Instalación
 
-   ```bash
-   git clone https://github.com/tu-usuario/Control-Visitantes-IIGE.git
-   cd Control-Visitantes-IIGE
-   cd backend
-   ```
+### 1. Clonar el repositorio
 
-2. **Instala las dependencias:**
+```bash
+git clone https://github.com/tu-usuario/Control-Visitantes-IIGE.git
+cd Control-Visitantes-IIGE/backend
+```
 
-   ```bash
-   npm install
+### 2. Instalar dependencias
 
-   ```
+```bash
+npm install
+```
 
-   Si necesitas instalar manualmente las dependencias principales, ejecuta:
+> Si lo prefieres, puedes instalar las dependencias principales manualmente:
 
-   ```bash
-   npm install express sequelize pg pg-hstore body-parser cors dotenv
-   ```
+```bash
+npm install express sequelize pg pg-hstore body-parser cors dotenv
+```
 
-3. **Configura las variables de entorno:**
+### 3. Configurar variables de entorno
 
-   - Al `.env` edítalo con tus datos locales.
+Crea un archivo `.env` en la carpeta `backend/` con el siguiente contenido ajustado a tu configuración local:
 
-   4. **Inicia el proyecto en modo desarrollo:**
+```env
+DB_HOST=localhost
+DB_USER=tu_usuario
+DB_PASSWORD=tu_contraseña
+DB_NAME=control_visitantes
+DB_PORT=5432
+PORT=3000
+```
 
-      ```bash
-      npm run dev
-      ```
+> Asegúrate de que la base de datos esté creada en PostgreSQL y las credenciales coincidan.
 
-   ## Herramientas utilizadas
+### 4. Ejecutar el proyecto
 
-   - **Express**: Framework para aplicaciones web en Node.js.
-   - **Sequelize**: ORM para bases de datos SQL.
-   - **PostgreSQL**: Sistema de gestión de bases de datos.
-   - **pg y pg-hstore**: Conectores para PostgreSQL y soporte para tipos de datos.
-   - **body-parser**: Middleware para procesar cuerpos de solicitudes HTTP.
-   - **cors**: Middleware para habilitar CORS.
-   - **dotenv**: Manejo de variables de entorno.
-   - **Node.js** y **npm/yarn**: Entorno de ejecución y gestión de dependencias.
+```bash
+npm run dev
+```
 
-   ```
+Esto iniciará el servidor en modo desarrollo usando `nodemon`. Por defecto, estará disponible en:
 
-   ```
+```
+http://localhost:3000
+```
 
-## Notas
+---
 
-## Soporte
+## 📁 Estructura del Proyecto
+
+```
+backend/
+├── config/            # Configuración de la base de datos (Sequelize)
+├── controllers/       # Controladores de las rutas
+├── models/            # Modelos Sequelize y relaciones
+├── routes/            # Definición de rutas API
+├── .env               # Variables de entorno
+├── app.js             # Configuración principal de la app
+├── package.json       # Dependencias y scripts
+└── README.md          # Documentación
+```
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+- **Node.js** – Entorno de ejecución para JavaScript
+- **Express** – Framework para construir APIs REST
+- **Sequelize** – ORM para PostgreSQL
+- **PostgreSQL** – Sistema de base de datos relacional
+- **dotenv** – Gestión de variables de entorno
+- **CORS** – Middleware para habilitar peticiones externas
+- **body-parser** – Middleware para analizar cuerpos de peticiones
+
+---
+
+## ✅ Endpoints Disponibles (hasta ahora)
+
+| Método | Endpoint              | Descripción                             |
+| ------ | --------------------- | --------------------------------------- |
+| POST   | `/api/usuarios/login` | Iniciar sesión con usuario y contraseña |
+
+> Más rutas serán añadidas conforme se avance el desarrollo del proyecto.
+
+---
+
+## 🧪 Pruebas con Postman
+
+Para probar el login:
+
+1. Abre Postman.
+2. Selecciona el método `POST`.
+3. URL: `http://localhost:3000/api/usuarios/login`
+4. En el **body**, selecciona `raw` y formato `JSON`:
+
+```json
+{
+  "usuario": "admin",
+  "contrasena": "admin123"
+}
+```
+
+---
+
+## 💬 Contribuciones
+
+- Usa `issues` para reportar errores o sugerencias.
+- Haz `pull requests` si deseas contribuir.
+
+---
+
+## 🆘 Soporte
+
+Si tienes preguntas o problemas con la instalación, por favor abre un [issue en GitHub](https://github.com/users/jordandd56/projects/1).
+
+---
+
+## 📌 Notas
+
+- Este backend es parte del proyecto de titulación para optimizar el control de visitantes del IIGE.
+- Cualquier cambio será reflejado aquí.
