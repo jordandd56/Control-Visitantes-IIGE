@@ -1,0 +1,121 @@
+/* Layout en dos columnas */
+
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f5f5; /* Fondo para toda la pantalla */
+}
+
+
+/* CENTRADO TOTAL */
+
+/* Centrar el formulario */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
+/* CAJA DEL FORMULARIO */
+.login-container {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  max-width:400px;
+  width: 90%;
+  color: #333;
+  box-shadow: 0px 2px 10px rgba(94, 27, 27, 0.1);
+}
+
+/* ENCABEZADO CON AVATAR Y TEXTO */
+.login-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+/* FORMULARIO EN COLUMNA */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+input {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+
+/* BOTÓN */
+button {
+  background-color: #000;
+  color: #fff;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #333;
+}
+
+/* LINKS */
+.small-link {
+  font-size: 12px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.small-link a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.small-link a:hover {
+  text-decoration: underline;
+}
+.left-link {
+  text-align: left;
+  margin-top: 10px;
+}
+
+/* Fondo blanco para ambos inputs */
+input#user, input#password {
+  background-color: white;
+}
+
+
+input#user::placeholder, input#password::placeholder {
+  color: #000; 
+  opacity: 1; 
+}
+
