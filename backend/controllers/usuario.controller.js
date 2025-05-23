@@ -1,6 +1,5 @@
 const { Usuario } = require("../models");
 
-// Otros métodos CRUD aquí...
 
 exports.login = async (req, res) => {
   const { usuario, contrasena } = req.body;
