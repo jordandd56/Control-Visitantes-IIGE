@@ -135,5 +135,5 @@ Si tienes preguntas o problemas con la instalación, por favor abre un [issue en
 
 ## 📌 Notas
 
-- Este backend es parte del proyecto de titulación para optimizar el control de visitantes del IIGE.
-- Cualquier cambio será reflejado aquí.
+- 
+- 
