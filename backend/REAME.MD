@@ -93,7 +93,7 @@ backend/
 
 ---
 
-## ✅ Endpoints Disponibles (hasta ahora)
+## ✅ Endpoints Disponibles 
 
 | Método | Endpoint              | Descripción                             |
 | ------ | --------------------- | --------------------------------------- |
