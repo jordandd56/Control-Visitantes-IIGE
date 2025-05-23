@@ -93,7 +93,7 @@ backend/
 
 ---
 
-## ✅ Endpoints Disponibles (hasta ahora)
+## ✅ Endpoints Disponibles 
 
 | Método | Endpoint              | Descripción                             |
 | ------ | --------------------- | --------------------------------------- |
@@ -114,8 +114,8 @@ Para probar el login:
 
 ```json
 {
-  "usuario": "admin",
-  "contrasena": "admin123"
+  "usuario": "djsegovia",
+  "contrasena": "1234"
 }
 ```
 
@@ -124,7 +124,6 @@ Para probar el login:
 ## 💬 Contribuciones
 
 - Usa `issues` para reportar errores o sugerencias.
-- Haz `pull requests` si deseas contribuir.
 
 ---
 
@@ -136,5 +135,5 @@ Si tienes preguntas o problemas con la instalación, por favor abre un [issue en
 
 ## 📌 Notas
 
-- Este backend es parte del proyecto de titulación para optimizar el control de visitantes del IIGE.
-- Cualquier cambio será reflejado aquí.
+- 
+- 
