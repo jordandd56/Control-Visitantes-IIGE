@@ -1,7 +1,5 @@
 const { Usuario } = require("../models");
 
-// Otros métodos CRUD aquí...
-
 exports.login = async (req, res) => {
   const { usuario, contrasena } = req.body;
 
@@ -20,15 +18,12 @@ exports.login = async (req, res) => {
         .json({ message: "Usuario o contraseña incorrectos" });
     }
 
-    // Aquí asumo que contrasena está almacenada en texto plano (no recomendado)
-    // Para producción, usar bcrypt para comparar hashes
     if (user.contrasena !== contrasena) {
       return res
         .status(401)
         .json({ message: "Usuario o contraseña incorrectos" });
     }
 
-    // Si todo bien, responder con datos del usuario (puedes omitir contrasena)
     const { contrasena: _, ...userData } = user.toJSON();
     res.json({ message: "Inicio de sesión exitoso", usuario: userData });
   } catch (error) {
