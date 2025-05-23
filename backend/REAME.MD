@@ -114,8 +114,8 @@ Para probar el login:
 
 ```json
 {
-  "usuario": "admin",
-  "contrasena": "admin123"
+  "usuario": "djsegovia",
+  "contrasena": "1234"
 }
 ```
 
@@ -124,7 +124,6 @@ Para probar el login:
 ## 💬 Contribuciones
 
 - Usa `issues` para reportar errores o sugerencias.
-- Haz `pull requests` si deseas contribuir.
 
 ---
 
