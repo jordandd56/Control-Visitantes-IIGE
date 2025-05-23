@@ -11,6 +11,7 @@ exports.login = async (req, res) => {
 
   try {
     // Buscar usuario por nombre de usuario
+
     const user = await Usuario.findOne({ where: { usuario } });
     if (!user) {
       return res
