@@ -40,8 +40,6 @@ git clone https://github.com/tu-usuario/Control-Visitantes-IIGE.git
 cd Control-Visitantes-IIGE/backend
 ```
 
-````
-
 ### 2. Instalar dependencias
 
 ```bash
@@ -173,4 +171,3 @@ Si tienes preguntas o problemas con la instalación, por favor abre un [issue en
 ## 📌 Notas
 
 - La documentación se actualizará conforme se agreguen nuevas funcionalidades.
-````
