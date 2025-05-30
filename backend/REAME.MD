@@ -4,6 +4,22 @@ Sistema de backend para el control y registro de visitantes en el Instituto de I
 
 ---
 
+## 📋 Índice
+
+- [🚀 Requisitos Previos](#-requisitos-previos)
+- [⚙️ Instalación](#️-instalación)
+- [📁 Estructura del Proyecto](#-estructura-del-proyecto)
+- [🛠️ Tecnologías Utilizadas](#-tecnologías-utilizadas)
+- [✅ Endpoints Disponibles](#-endpoints-disponibles)
+- [🧪 Pruebas con Postman](#-pruebas-con-postman)
+  - [Para probar el login](#para-probar-el-login)
+  - [Para probar el registro de nuevo usuario](#para-probar-el-registro-de-nuevo-usuario)
+- [💬 Contribuciones](#-contribuciones)
+- [🆘 Soporte](#-soporte)
+- [📌 Notas](#-notas)
+
+---
+
 ## 🚀 Requisitos Previos
 
 Antes de comenzar, asegúrate de tener instalado:
@@ -23,6 +39,8 @@ Antes de comenzar, asegúrate de tener instalado:
 git clone https://github.com/tu-usuario/Control-Visitantes-IIGE.git
 cd Control-Visitantes-IIGE/backend
 ```
+
+````
 
 ### 2. Instalar dependencias
 
@@ -93,11 +111,12 @@ backend/
 
 ---
 
-## ✅ Endpoints Disponibles 
+## ✅ Endpoints Disponibles
 
-| Método | Endpoint              | Descripción                             |
-| ------ | --------------------- | --------------------------------------- |
-| POST   | `/api/usuarios/login` | Iniciar sesión con usuario y contraseña |
+| Método | Endpoint                | Descripción                             |
+| ------ | ----------------------- | --------------------------------------- |
+| POST   | `/api/usuarios/login`   | Iniciar sesión con usuario y contraseña |
+| POST   | `/api/usuarios/agregar` | Registrar nuevo usuario                 |
 
 > Más rutas serán añadidas conforme se avance el desarrollo del proyecto.
 
@@ -105,7 +124,7 @@ backend/
 
 ## 🧪 Pruebas con Postman
 
-Para probar el login:
+### Para probar el login
 
 1. Abre Postman.
 2. Selecciona el método `POST`.
@@ -116,6 +135,24 @@ Para probar el login:
 {
   "usuario": "djsegovia",
   "contrasena": "1234"
+}
+```
+
+---
+
+### Para probar el registro de nuevo usuario
+
+1. Abre Postman.
+2. Selecciona el método `POST`.
+3. URL: `http://localhost:3000/api/usuarios/agregar`
+4. En el **body**, selecciona `raw` y formato `JSON`:
+
+```json
+{
+  "nombre_completo": "Jose Muzo",
+  "usuario": "muzoo",
+  "contrasena": "1234",
+  "rol_id": "1"
 }
 ```
 
@@ -135,5 +172,5 @@ Si tienes preguntas o problemas con la instalación, por favor abre un [issue en
 
 ## 📌 Notas
 
-- 
-- 
+- La documentación se actualizará conforme se agreguen nuevas funcionalidades.
+````
