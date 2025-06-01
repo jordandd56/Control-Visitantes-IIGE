@@ -130,36 +130,7 @@ function Reporte() {
       doc.text(split, 14, (y += 10));
       y += split.length * 5;
 
-      autoTable(doc, {
-        startY: y + 10,
-        head: [
-          [
-            "Nombre",
-            "Cédula",
-            "Contacto",
-            "Empresa",
-            "Fecha",
-            "Ingreso",
-            "Salida",
-            "Área",
-            "Motivo",
-            "Observación",
-            "Registrado por",
-          ],
-        ],
-        body: detalle.map((v) => [
-          v.visitante?.nombres || "-",
-          v.visitante?.cedula || "-",
-          v.visitante?.contacto || "-",
-          v.visitante?.empresa || "-",
-          v.fecha,
-          v.hora_ingreso || "-",
-          v.hora_salida || "-",
-          v.area || "-",
-          v.motivo || "-",
-          v.observacion || "-",
-          v.registrado_por || "-",
-        ]),
+      
         styles: { fontSize: 8 },
       });
 
