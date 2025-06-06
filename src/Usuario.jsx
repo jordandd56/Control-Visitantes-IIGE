@@ -278,7 +278,7 @@ export default function PanelGuardias() {
         >
           <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="mb-4 text-xl font-bold text-gray-800">
-              {editMode ? "Editar contraseña" : "Agregar guardia"}
+              {editMode ? "Editar la clave " : "Agregar guardia"}
             </h2>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
@@ -327,7 +327,7 @@ export default function PanelGuardias() {
                   <input
                     type="password"
                     name="codigoVerificacion"
-                    placeholder="Código de verificación"
+                    placeholder="Código de verificación"  //
                     className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.codigoVerificacion}
                     onChange={handleInputChange}

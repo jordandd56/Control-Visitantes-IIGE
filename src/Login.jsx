@@ -46,7 +46,7 @@ function AuthForm({ isLogin = true }) {
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-55% to-blue-500">
       {/* 🖼️ Imagen institucional del IIGE */}
       <div className="md:w-1/2 w-full flex justify-center items-center p-4">
-        <img
+        <img    
           src="../src/assets/imgLogin.png" // Asegúrate de que esta ruta sea válida
           alt="Instituto de investigación"
           className="w-[90%] h-auto object-cover rounded-2xl shadow-2xl"
@@ -55,7 +55,7 @@ function AuthForm({ isLogin = true }) {
 
       {/* 🔐 Formulario de Login o Registro */}
       <div className="md:w-1/2 w-full flex items-center justify-center p-6">
-        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">//
           <h2 className="text-4xl font-extrabold text-center text-gray-800 mb-6">
             {isLogin ? "Iniciar Sesión" : "Registrarse"}
           </h2>
