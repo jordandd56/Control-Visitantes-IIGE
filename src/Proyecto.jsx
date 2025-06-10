@@ -4,7 +4,7 @@ function Proyecto() {
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Usuario</h2>
         <p className="text-gray-700 mb-4">
-          Aquí va el contenido del usuarioooo.
+         registro de tablas de usuario principales 
         </p>
       </div>
     </div>

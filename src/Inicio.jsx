@@ -15,8 +15,7 @@ const normalizarVisita = (v) => {
   let estadoUI = "Pendiente";
   if (v.estado === "ingreso") {
     estadoUI = v.hora_salida ? "Salió" : "Aprobado";
-  } else if (v.estado === "salida") {
-    estadoUI = "Salió";
+  
   } else if (v.estado === "rechazado") {
     estadoUI = "Rechazado";
   }
