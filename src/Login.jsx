@@ -14,6 +14,8 @@ function AuthForm({ isLogin = true }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+
+// enlace con endoint a al abase de dato sy registro 
     const endpoint = isLogin
       ? "http://localhost:3000/api/usuarios/login"
       : "http://localhost:3000/api/usuarios/registro";
