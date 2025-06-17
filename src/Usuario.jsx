@@ -28,7 +28,14 @@ export default function PanelGuardias() {
   const filasMostradas = usuarios.slice(indicePrimeraFila, indiceUltimaFila);
   const totalPaginas = Math.ceil(usuarios.length / filasPorPagina);
 
+
+
+
+
+
+  // obtencion de usuarios  adminsitradores y guardias
   
+
   const obtenerUsuarios = async () => {
     try {
       setLoading(true);
