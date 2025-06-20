@@ -14,6 +14,9 @@ app.use(bodyParser.json());
 // Rutas
 app.use("/api/usuarios", require("./routes/usuario.routes"));
 
+app.use("/api/visitantes", require("./routes/visitante.routes"));
+
+app.use("/api/roles", require("./routes/rol.routes"));
 // Conexión y servidor
 sequelize
   .authenticate()
