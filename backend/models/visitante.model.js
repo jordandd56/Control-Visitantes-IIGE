@@ -11,12 +11,13 @@ const Visitante = sequelize.define(
     },
     cedula: {
       type: DataTypes.STRING(20),
-      allowNull: false,
+      allowNull: true,
       unique: true,
     },
     pasaporte: {
       type: DataTypes.STRING(20),
       allowNull: true,
+      unique: true,
     },
     nombres: {
       type: DataTypes.STRING(100),
