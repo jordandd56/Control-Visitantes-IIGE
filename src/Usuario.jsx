@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil } from "lucide-react";
+
 
 export default function PanelGuardias() {
   
@@ -350,6 +350,7 @@ export default function PanelGuardias() {
                   )}
                 </>
               )}
+              //routes
 
               {/* Selector de rol solo en creación */}
               {!editMode && (

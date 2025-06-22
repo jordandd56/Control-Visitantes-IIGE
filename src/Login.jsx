@@ -1,6 +1,6 @@
 
 // Elaboración de formularios de autenticación (Login y Registro) con imagen institucional del IIGE
-// Este componente presenta una interfaz dividida en dos secciones:
+
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react"; // Íconos para mostrar/ocultar contraseña
@@ -15,7 +15,6 @@ function AuthForm({ isLogin = true }) {
     e.preventDefault();
 
 
-// enlace con endoint a al abase de dato sy registro 
     const endpoint = isLogin
       ? "http://localhost:3000/api/usuarios/login"
       : "http://localhost:3000/api/usuarios/registro";

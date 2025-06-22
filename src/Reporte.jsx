@@ -1,6 +1,6 @@
 import { useState } from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+
 
 function Reporte() {
   const [tipo, setTipo] = useState("cedula"); // "cedula" | "fecha" | "rango"
@@ -12,7 +12,7 @@ function Reporte() {
   const [error, setError] = useState("");
 
   const obtenerReporte = async () => {
-    // Validaciones
+    
     if (tipo === "cedula" && !input) {
       setError("Por favor ingresa una cédula.");
       return;
@@ -46,7 +46,7 @@ function Reporte() {
 
       if (!res.ok)
         throw new Error(data.message || "Error al obtener el reporte");
-
+// reporte modificado form
       setReporte(data);
     } catch (err) {
       setError(err.message);
