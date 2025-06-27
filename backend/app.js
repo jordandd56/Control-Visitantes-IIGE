@@ -19,6 +19,8 @@ app.use("/api/visitantes", require("./routes/visitante.routes"));
 app.use("/api/roles", require("./routes/rol.routes"));
 
 app.use("/api/areas", require("./routes/areas.routes"));
+
+app.use("/api/visitas", require("./routes/visita.routes"));
 // Conexión y servidor
 sequelize
   .authenticate()
