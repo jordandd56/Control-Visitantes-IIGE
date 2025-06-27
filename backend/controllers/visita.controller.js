@@ -34,3 +34,22 @@ exports.crearVisita = async (req, res) => {
     });
   }
 };
+
+exports.obtenerVisitasDelDia = async (req, res) => {
+  try {
+    const hoy = new Date().toISOString().slice(0, 10);
+
+    const visitas = await Visita.findAll({
+      where: {
+        fecha: hoy,
+      },
+    });
+
+    res.status(200).json(visitas);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al obtener las visitas del día",
+      error: error.message,
+    });
+  }
+};
