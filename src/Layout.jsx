@@ -1,3 +1,7 @@
+
+// archivo layout  barra lateral isquierda  control de panel
+
+
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Home, Users, FolderKanban, FileBarChart2, LogOut } from "lucide-react";
 
