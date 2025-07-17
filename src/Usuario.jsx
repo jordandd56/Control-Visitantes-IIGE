@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-
+import { Plus, Pencil } from "lucide-react";
 
 export default function PanelGuardias() {
-  
+  /* ------------------------------------------------------------------
+   * Estado del componente
+   * ------------------------------------------------------------------ */
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -24,18 +26,17 @@ export default function PanelGuardias() {
   });
   const [errors, setErrors] = useState({});
 
+  /* ------------------------------------------------------------------
+   * Cálculos de paginación tabla
+   * ------------------------------------------------------------------ */
+  const indiceUltimaFila = paginaActual * filasPorPagina;
   const indicePrimeraFila = indiceUltimaFila - filasPorPagina;
   const filasMostradas = usuarios.slice(indicePrimeraFila, indiceUltimaFila);
   const totalPaginas = Math.ceil(usuarios.length / filasPorPagina);
 
-
-
-
-
-
-  // obtencion de usuarios  adminsitradores y guardias
-  
-
+  /* ------------------------------------------------------------------
+   * Funciones para obtener datos de los usuarios y roles
+   * ------------------------------------------------------------------ */
   const obtenerUsuarios = async () => {
     try {
       setLoading(true);
@@ -66,16 +67,25 @@ export default function PanelGuardias() {
     }
   };
 
+  /* ------------------------------------------------------------------
+   * Efecto inicial para cargar datos al montar el componente
+   * ------------------------------------------------------------------ */
   useEffect(() => {
     obtenerUsuarios();
     obtenerRoles();
   }, []);
 
+  /* ------------------------------------------------------------------
+   * Manejador para actualizar estado del formulario
+   * ------------------------------------------------------------------ */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /* ------------------------------------------------------------------
+   * Función para resetear estado y cerrar modal
+   * ------------------------------------------------------------------ */
   const resetModal = () => {
     setFormData({
       nombre_completo: "",
@@ -90,6 +100,9 @@ export default function PanelGuardias() {
     setShowModal(false);
   };
 
+  /* ------------------------------------------------------------------
+   * Manejador para enviar formulario (crear o editar contraseña)
+   * ------------------------------------------------------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -156,8 +169,26 @@ export default function PanelGuardias() {
     }
   };
 
- 
+  /* ------------------------------------------------------------------
+   * Manejador para abrir modal en modo edición y cargar datos usuario
+   * ------------------------------------------------------------------ */
+  const handleEditClick = (u) => {
+    setEditMode(true);
+    setCurrentUserId(u.id);
+    setFormData({
+      nombre_completo: u.nombre_completo,
+      usuario: u.usuario,
+      contrasena: "",
+      rol_id: u.rol?.id || u.rol_id || "",
+      codigoVerificacion: "",
+    });
+    setErrors({});
+    setShowModal(true);
+  };
 
+  /* ------------------------------------------------------------------
+   * Renderizado del componente
+   * ------------------------------------------------------------------ */
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-5xl rounded-2xl bg-white p-6 shadow-md">
@@ -282,13 +313,10 @@ export default function PanelGuardias() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-        
         >
-        
-// iconos  den panel lateral  
           <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="mb-4 text-xl font-bold text-gray-800">
-              {editMode ? "Editar la clave " : "Agregar guardia"}
+              {editMode ? "Editar contraseña" : "Agregar guardia"}
             </h2>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
@@ -337,7 +365,7 @@ export default function PanelGuardias() {
                   <input
                     type="password"
                     name="codigoVerificacion"
-                    placeholder="Código de verificación"  //
+                    placeholder="Código de verificación"
                     className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.codigoVerificacion}
                     onChange={handleInputChange}
@@ -350,7 +378,6 @@ export default function PanelGuardias() {
                   )}
                 </>
               )}
-              //routes
 
               {/* Selector de rol solo en creación */}
               {!editMode && (
