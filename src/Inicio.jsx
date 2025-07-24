@@ -10,14 +10,13 @@ const API_BASE_VISITANTES =
 const API_BASE_AREAS =
   "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/areas";
 
-//elimniar boton de reporte
-
 
 const normalizarVisita = (v) => {
   let estadoUI = "Pendiente";
   if (v.estado === "ingreso") {
     estadoUI = v.hora_salida ? "Salió" : "Aprobado";
-  
+  } else if (v.estado === "salida") {
+    estadoUI = "Salió";
   } else if (v.estado === "rechazado") {
     estadoUI = "Rechazado";
   }
@@ -62,8 +61,6 @@ function exportCSV(filas) {
     "Salida",
     "Observaciones",
   ];
-
-  // boton de busqueda de usuario
   const csv = [
     headers,
     ...filas.map((r) => [
