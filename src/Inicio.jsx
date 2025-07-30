@@ -86,6 +86,7 @@ function exportCSV(filas) {
   link.download = "visitas_export.csv";
   link.click();
 }
+//arreloe segundos
 
 /* ===============VALIDACION DE CEDULA DE IDENTIDAD =================================== */
 
@@ -302,7 +303,7 @@ export default function ControlVisitasVisual() {
       setAQuienVisita("");
       setMotivo("");
 
-      // Actualiza la tabla automaticamente
+      // Actualiza la tabla automaticament
       cargarVisitas();
 
       // Opcional: actualizar lista de visitas
