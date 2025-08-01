@@ -138,13 +138,21 @@ export default function ControlVisitasVisual() {
   const [modalObservacion, setModalObservacion] = useState(null);
 
   const [cedula, setCedula] = useState("");
+
   const [pasaporte, setPasaporte] = useState("");
+
   const [visitanteEncontrado, setVisitanteEncontrado] = useState(null);
+
   const [areas, setAreas] = useState([]);
+
   const [areaSeleccionada, setAreaSeleccionada] = useState("");
+
+
   const [aQuienVisita, setAQuienVisita] = useState("");
   const [motivo, setMotivo] = useState("");
+
   const [registradoPor, setRegistradoPor] = useState(38); // aquí pon tu id de usuario actual o de sesión
+
   const [mensaje, setMensaje] = useState("");
 
 
@@ -155,10 +163,14 @@ export default function ControlVisitasVisual() {
     if (!res.ok) throw new Error("Error al obtener visitas");
     const data = await res.json();
     setVisitas(data.map(normalizarVisita));
+
     setErrorFetch("");
   } catch (err) {
+
     console.error(err);
+
     setErrorFetch("No se pudo conectar al servidor");
+
   } finally {
     setLoading(false);
   }
@@ -170,7 +182,9 @@ export default function ControlVisitasVisual() {
   useEffect(() => {
     const cargarAreas = async () => {
       try {
+
         const res = await fetch(API_BASE_AREAS);
+
         if (!res.ok) throw new Error("Error al cargar áreas");
         const data = await res.json();
         setAreas(data);
@@ -181,6 +195,7 @@ export default function ControlVisitasVisual() {
     cargarAreas();
   }, []);
 
+//
   // Buscar visitante por cédula o pasaporte validacion 
   const buscarVisitante = async () => {
   setMensaje("");
