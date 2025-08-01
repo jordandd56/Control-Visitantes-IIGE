@@ -15,11 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Mostrar directorio raíz
-        run: ls -la
-
-      - name: Mostrar contenido de backend
-        run: ls -la backend
+      - name: Mostrar contenido del proyecto
+        run: ls -la && ls -la backend
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
