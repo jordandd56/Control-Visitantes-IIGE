@@ -31,8 +31,15 @@ jobs:
 
       - name: npm install, build, and test
         run: |
+          echo "Directorio actual antes de cd backend:"
           pwd
+          echo "Archivos en directorio actual:"
+          ls -la
           cd backend
+          echo "Directorio actual dentro de backend:"
+          pwd
+          echo "Archivos en backend:"
+          ls -la
           npm install
           npm run build --if-present
           npm run test --if-present
@@ -70,3 +77,4 @@ jobs:
           app-name: 'mi-backend-nodejs'
           slot-name: 'Production'
           package: ./node-app
+
