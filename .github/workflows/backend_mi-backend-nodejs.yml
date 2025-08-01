@@ -15,33 +15,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: List root directory
+      # Debug para ver estructura
+      - name: Show root structure
         run: ls -la
 
-      - name: List backend directory
-        run: ls -la ./backend
+      - name: Show backend structure
+        run: ls -la backend
 
-      - name: Set up Node.js version
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
 
-      - name: npm install, build, and test
-        run: |
-          echo "Directorio actual antes de cd backend:"
-          pwd
-          echo "Archivos en directorio actual:"
-          ls -la
-          cd backend
-          echo "Directorio actual dentro de backend:"
-          pwd
-          echo "Archivos en backend:"
-          ls -la
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+      # 👇 Aquí nos movemos a /backend donde está package.json
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm install
 
-      - name: Upload artifact for deployment job
+      - name: Build (if present)
+        working-directory: ./backend
+        run: npm run build --if-present
+
+      - name: Test (if present)
+        working-directory: ./backend
+        run: npm run test --if-present
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -55,11 +54,11 @@ jobs:
       contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -67,8 +66,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_208E9B721387456F8979AEF2F3A00804 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_404CDE25A1AA484C809BF4AC3FA1091F }}
 
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'mi-backend-nodejs'
