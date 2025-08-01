@@ -1,45 +1,41 @@
-name: Deploy Node.js Backend to Azure
+name: Build and deploy Node.js app to Azure Web App
 
 on:
   push:
     branches:
-      - backend
-  workflow_dispatch:
+      - backend   # Cambiado a la rama donde tienes tu backend
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend   # 👈 TODOS los comandos se ejecutan dentro de /backend
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Verificar estructura
-        run: |
-          echo "📂 Root:"
-          ls -la
-          echo "📂 Backend:"
-          ls -la backend
-
-      - name: Set up Node.js
+      - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '20'
 
-      - name: Instalar dependencias
+      - name: Install dependencies
+        working-directory: ./backend
         run: npm install
 
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F990CE9B02494968B66514F1FFD3164C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_208E9B721387456F8979AEF2F3A00804 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_404CDE25A1AA484C809BF4AC3FA1091F }}
+      # Si no tienes script build en package.json, elimina este paso o déjalo comentado
+      #- name: Build
+      #  working-directory: ./backend
+      #  run: npm run build
+
+      - name: Ensure start file
+        working-directory: ./backend
+        run: |
+          if [ ! -f server.js ] && [ -f app.js ]; then
+            cp app.js server.js
+          fi
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'mi-backend-nodejs'
-          slot-name: 'Production'
-          package: ./backend   # 👈 Sube la carpeta backend completa
+          slot-name: 'production'
+          package: ./backend
