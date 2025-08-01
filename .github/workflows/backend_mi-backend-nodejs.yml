@@ -9,38 +9,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend   # 👈 TODOS los comandos se ejecutan dentro de /backend
     permissions:
       contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      # Debug para ver estructura
-      - name: Show root structure
-        run: ls -la
-
-      - name: Show backend structure
-        run: ls -la backend
+      - name: Verificar estructura
+        run: |
+          echo "📂 Root:"
+          ls -la
+          echo "📂 Backend:"
+          ls -la backend
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
 
-      # 👇 Aquí nos movemos a /backend donde está package.json
-      - name: Install dependencies
-        working-directory: ./backend
+      - name: Instalar dependencias
         run: npm install
 
-      - name: Build (if present)
-        working-directory: ./backend
+      - name: Build (si existe)
         run: npm run build --if-present
 
-      - name: Test (if present)
-        working-directory: ./backend
+      - name: Test (si existe)
         run: npm run test --if-present
 
-      - name: Upload artifact
+      - name: Subir artefacto
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -54,19 +53,19 @@ jobs:
       contents: read
 
     steps:
-      - name: Download artifact
+      - name: Descargar artefacto
         uses: actions/download-artifact@v4
         with:
           name: node-app
 
-      - name: Login to Azure
+      - name: Login Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F990CE9B02494968B66514F1FFD3164C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_208E9B721387456F8979AEF2F3A00804 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_404CDE25A1AA484C809BF4AC3FA1091F }}
 
-      - name: Deploy to Azure Web App
+      - name: Deploy Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'mi-backend-nodejs'
