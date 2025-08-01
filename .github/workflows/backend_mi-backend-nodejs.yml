@@ -6,7 +6,7 @@ name: Build and deploy Node.js app to Azure Web App - mi-backend-nodejs
 on:
   push:
     branches:
-      - backend   # Cambia si usas otra rama para deploy
+      - backend
   workflow_dispatch:
 
 jobs:
@@ -17,6 +17,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: List root directory
+        run: ls -la
+
+      - name: List backend directory
+        run: ls -la ./backend
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
@@ -63,4 +69,5 @@ jobs:
           app-name: 'mi-backend-nodejs'
           slot-name: 'Production'
           package: ./node-app
+
 
