@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        working-directory: ./backend
+        working-directory: ../backend
         run: npm install
 
       # Si no tienes script build en package.json, elimina este paso o déjalo comentado
@@ -27,7 +27,7 @@ jobs:
       #  run: npm run build
 
       - name: Ensure start file
-        working-directory: ./backend
+        working-directory: ../backend
         run: |
           if [ ! -f server.js ] && [ -f app.js ]; then
             cp app.js server.js
@@ -38,4 +38,4 @@ jobs:
         with:
           app-name: 'mi-backend-nodejs'
           slot-name: 'production'
-          package: ./backend
+          package: ../backend
