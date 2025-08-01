@@ -1,4 +1,4 @@
-name: Build and deploy Node.js app to Azure Web App - mi-backend-nodejs
+name: Deploy Node.js Backend to Azure
 
 on:
   push:
@@ -7,14 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend   # 👈 TODOS los comandos se ejecutan dentro de /backend
-    permissions:
-      contents: read
-
     steps:
       - uses: actions/checkout@v4
 
@@ -33,41 +30,16 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      - name: Build (si existe)
-        run: npm run build --if-present
-
-      - name: Test (si existe)
-        run: npm run test --if-present
-
-      - name: Subir artefacto
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: ./backend
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Descargar artefacto
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
-
-      - name: Login Azure
+      - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F990CE9B02494968B66514F1FFD3164C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_208E9B721387456F8979AEF2F3A00804 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_404CDE25A1AA484C809BF4AC3FA1091F }}
 
-      - name: Deploy Azure Web App
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'mi-backend-nodejs'
           slot-name: 'Production'
-          package: ./node-app
+          package: ./backend   # 👈 Sube la carpeta backend completa
