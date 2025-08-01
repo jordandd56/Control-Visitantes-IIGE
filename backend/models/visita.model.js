@@ -11,28 +11,28 @@ const Visita = sequelize.define(
     },
     visitante_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     a_quien_visita: {
       type: DataTypes.STRING(100),
-      allowNull: false,
+      allowNull: true,
     },
     area_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     motivo: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     fecha: {
       type: DataTypes.DATEONLY,
-      allowNull: false,
+      allowNull: true,
       defaultValue: DataTypes.NOW,
     },
     hora_ingreso: {
       type: DataTypes.TIME,
-      allowNull: false,
+      allowNull: true,
     },
     hora_salida: {
       type: DataTypes.TIME,
@@ -40,11 +40,19 @@ const Visita = sequelize.define(
     },
     registrado_por: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     observacion: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
+    },
+    estado: {
+      type: DataTypes.ENUM("null", "ingreso", "salida"),
+      allowNull: true,
+      defaultValue: "ingreso",
+      validate: {
+        isIn: [["null", "ingreso", "salida"]],
+      },
     },
   },
   {

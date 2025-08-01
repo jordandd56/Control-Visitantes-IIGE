@@ -6,8 +6,8 @@ const Visitante = require("./visitante.model");
 const Visita = require("./visita.model");
 
 // Relaciones
-Rol.hasMany(Usuario, { foreignKey: "rol_id" });
-Usuario.belongsTo(Rol, { foreignKey: "rol_id" });
+Rol.hasMany(Usuario, { foreignKey: "rol_id", as: "usuarios" });
+Usuario.belongsTo(Rol, { foreignKey: "rol_id", as: "rol" });
 
 Area.hasMany(Visita, { foreignKey: "area_id" });
 Visita.belongsTo(Area, { foreignKey: "area_id" });

@@ -23,6 +23,14 @@ const Visitante = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    empresa: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
+    contacto: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
   },
   {
     tableName: "visitantes",

@@ -3,7 +3,7 @@ const { Op } = require("sequelize");
 
 exports.agregarVisitante = async (req, res) => {
   try {
-    const { cedula, pasaporte, nombres } = req.body;
+    const { cedula, pasaporte, nombres, empresa, contacto } = req.body;
 
     if ((!cedula && !pasaporte) || !nombres) {
       return res.status(400).json({
@@ -25,6 +25,8 @@ exports.agregarVisitante = async (req, res) => {
       cedula,
       pasaporte,
       nombres,
+      empresa,
+      contacto,
     });
 
     res.status(201).json({
