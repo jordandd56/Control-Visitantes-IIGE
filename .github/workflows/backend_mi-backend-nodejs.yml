@@ -15,8 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: List full repo tree
-        run: tree -a -L 3 || find . -maxdepth 3 -exec ls -la {} \;
+      - name: List root directory
+        run: ls -la
+
+      - name: List backend directory
+        run: ls -la ./backend
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
