@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function PanelGuardias() {
   /* ------------------------------------------------------------------
@@ -16,6 +18,16 @@ export default function PanelGuardias() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+  const usuario = JSON.parse(localStorage.getItem("usuario"));
+  if (usuario?.rol_id !== 1) {
+    navigate("/inicio"); // Redirige si no es admin
+  }
+}, []);
 
   const [formData, setFormData] = useState({
     nombre_completo: "",

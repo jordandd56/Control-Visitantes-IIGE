@@ -4,10 +4,14 @@
  * ------------------------------------------------------------------ */
 import { useEffect, useMemo, useState } from "react";
 
-const API_BASE = "http://localhost:3000/api/visitas"; // ajusta si es necesario
-const API_BASE_VISITAS = "http://localhost:3000/api/visitas";
-const API_BASE_VISITANTES = "http://localhost:3000/api/visitantes";
-const API_BASE_AREAS = "http://localhost:3000/api/areas";
+const API_BASE =
+  "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/visitas";
+const API_BASE_VISITAS =
+  "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/visitas";
+const API_BASE_VISITANTES =
+  "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/visitantes";
+const API_BASE_AREAS =
+  "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/areas";
 
 /* -------------------------------------------------- */
 /* Helpers */
@@ -31,7 +35,7 @@ const normalizarVisita = (v) => {
     personaVisitada: v.a_quien_visita,
     area: v.Area?.nombre ?? "-",
     fecha: v.fecha,
-    hora: (v.hora_ingreso || v.hora)?.slice(0, 5),    // Solo mostrar hora y minutos ya no milisegundos
+    hora: (v.hora_ingreso || v.hora)?.slice(0, 5), // Solo HH:MM
     ingreso: v.hora_ingreso?.slice(0, 5),
     salida: v.hora_salida?.slice(0, 5),
     estado: estadoUI,
@@ -86,25 +90,18 @@ function exportCSV(filas) {
   link.download = "visitas_export.csv";
   link.click();
 }
-//arreloe segundos
 
-/* ===============VALIDACION DE CEDULA DE IDENTIDAD =================================== */
-
+/* =============== VALIDACION DE CEDULA DE IDENTIDAD ================== */
 function validarCedulaEcuatoriana(cedula) {
-  // Verifica que tenga exactamente 10 dígitos numéricos
   if (!/^\d{10}$/.test(cedula)) return false;
 
   const provincia = parseInt(cedula.substring(0, 2), 10);
   const tercerDigito = parseInt(cedula[2], 10);
 
-  // Validación de provincia: entre 01-24 o 30 (para extranjeros)
   if (!((provincia >= 1 && provincia <= 24) || provincia === 30)) return false;
-
-  // Validación de tipo de persona: solo personas naturales ecuatorianas (0 a 5), 6 para instituciones públicas
   if (tercerDigito > 6) return false;
 
-  // Validación del dígito verificador
-  const coeficientes = [2,1,2,1,2,1,2,1,2];
+  const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
   let suma = 0;
 
   for (let i = 0; i < 9; i++) {
@@ -120,11 +117,29 @@ function validarCedulaEcuatoriana(cedula) {
   return digitoVerificadorCalculado === digitoVerificadorReal;
 }
 
+/* =============== VALIDACION DE PASAPORTE ============================ */
+/* Reglas:
+   - Solo alfanumérico (A–Z, 0–9)
+   - Longitud: 6 a 10
+   - Se normaliza: quita símbolos/espacios y pasa a MAYÚSCULAS
+   - (Opcional) exigir al menos una letra y un número (ver línea comentada)
+*/
+const PASAPORTE_MIN = 6;
+const PASAPORTE_MAX = 10;
 
+function normalizarPasaporte(valor) {
+  if (!valor) return "";
+  return valor.toString().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
 
-/* ================================================== */
-/* Componente principal */
-/* ================================================== */
+function validarPasaporte(valor) {
+  const v = normalizarPasaporte(valor);
+  if (v.length < PASAPORTE_MIN || v.length > PASAPORTE_MAX) return false;
+  // Si tu institución exige al menos una letra Y un número, descomenta:
+  // if (!/[A-Z]/.test(v) || !/\d/.test(v)) return false;
+  return /^[A-Z0-9]+$/.test(v);
+}
+
 export default function ControlVisitasVisual() {
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,53 +153,35 @@ export default function ControlVisitasVisual() {
   const [modalObservacion, setModalObservacion] = useState(null);
 
   const [cedula, setCedula] = useState("");
-
   const [pasaporte, setPasaporte] = useState("");
-
   const [visitanteEncontrado, setVisitanteEncontrado] = useState(null);
-
   const [areas, setAreas] = useState([]);
-
   const [areaSeleccionada, setAreaSeleccionada] = useState("");
-
-
   const [aQuienVisita, setAQuienVisita] = useState("");
   const [motivo, setMotivo] = useState("");
-
-  const [registradoPor, setRegistradoPor] = useState(38); // aquí pon tu id de usuario actual o de sesión
-
+  const [registradoPor, setRegistradoPor] = useState(38); // tu id de usuario
   const [mensaje, setMensaje] = useState("");
 
-
   const cargarVisitas = async () => {
-  setLoading(true);
-  try {
-    const res = await fetch(`${API_BASE}/obtenerVisitasDelDia`);
-    if (!res.ok) throw new Error("Error al obtener visitas");
-    const data = await res.json();
-    setVisitas(data.map(normalizarVisita));
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/obtenerVisitasDelDia`);
+      if (!res.ok) throw new Error("Error al obtener visitas");
+      const data = await res.json();
+      setVisitas(data.map(normalizarVisita));
+      setErrorFetch("");
+    } catch (err) {
+      console.error(err);
+      setErrorFetch("No se pudo conectar al servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setErrorFetch("");
-  } catch (err) {
-
-    console.error(err);
-
-    setErrorFetch("No se pudo conectar al servidor");
-
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
-  // Traer áreas al montar componente
   useEffect(() => {
     const cargarAreas = async () => {
       try {
-
         const res = await fetch(API_BASE_AREAS);
-
         if (!res.ok) throw new Error("Error al cargar áreas");
         const data = await res.json();
         setAreas(data);
@@ -195,73 +192,80 @@ export default function ControlVisitasVisual() {
     cargarAreas();
   }, []);
 
-//
-  // Buscar visitante por cédula o pasaporte validacion 
   const buscarVisitante = async () => {
-  setMensaje("");
-  setVisitanteEncontrado(null);
+    setMensaje("");
+    setVisitanteEncontrado(null);
 
-  if (!cedula && !pasaporte) {
-    setMensaje("Debe ingresar cédula o pasaporte");
-    return;
-  }
-
-  if (cedula && !validarCedulaEcuatoriana(cedula)) {
-    setMensaje("Cédula inválida, por favor revise el número ingresado");
-    return;
-  }
-
-  try {
-    const params = new URLSearchParams();
-    if (cedula) params.append("cedula", cedula);
-    if (pasaporte) params.append("pasaporte", pasaporte);
-
-    const res = await fetch(
-      `${API_BASE_VISITANTES}/buscarVisitante?${params.toString()}`
-    );
-    if (!res.ok) {
-      if (res.status === 404) {
-        setMensaje(
-          "Visitante no encontrado, por favor ingrese los datos para registrar"
-        );
-        return;
-      }
-      throw new Error("Error en la búsqueda");
+    if (!cedula && !pasaporte) {
+      setMensaje("Debe ingresar cédula o pasaporte");
+      return;
     }
 
-    const data = await res.json();
-    setVisitanteEncontrado(data);
-    setMensaje("Visitante encontrado");
-  } catch (err) {
-    console.error(err);
-    setMensaje("Error al buscar visitante");
-  }
-};
+    if (cedula && !validarCedulaEcuatoriana(cedula)) {
+      setMensaje("Cédula inválida, por favor revise el número ingresado");
+      return;
+    }
 
-  // Crear visitante nuevo si no existe
+    if (pasaporte && !validarPasaporte(pasaporte)) {
+      setMensaje(
+        `Pasaporte inválido: use ${PASAPORTE_MIN}-${PASAPORTE_MAX} caracteres alfanuméricos.`
+      );
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (cedula) params.append("cedula", cedula);
+      if (pasaporte) params.append("pasaporte", normalizarPasaporte(pasaporte));
+
+      const res = await fetch(
+        `${API_BASE_VISITANTES}/buscarVisitante?${params.toString()}`
+      );
+      if (!res.ok) {
+        if (res.status === 404) {
+          setMensaje(
+            "Visitante no encontrado, por favor ingrese los datos para registrar"
+          );
+          return;
+        }
+        throw new Error("Error en la búsqueda");
+      }
+
+      const data = await res.json();
+      setVisitanteEncontrado(data);
+      setMensaje("Visitante encontrado");
+    } catch (err) {
+      console.error(err);
+      setMensaje("Error al buscar visitante");
+    }
+  };
+
   const agregarVisitante = async (nombres, empresa, contacto) => {
-  setMensaje("");
+    setMensaje("");
 
-  try {
-    const body = {};
+    try {
+      const body = {};
 
-    // Validación de cédula
-    if (cedula) {
-      if (!validarCedulaEcuatoriana(cedula)) {
-        setMensaje("Cédula inválida.");
-        return;
+      // Cédula (si existe)
+      if (cedula) {
+        if (!validarCedulaEcuatoriana(cedula)) {
+          setMensaje("Cédula inválida.");
+          return;
+        }
+        body.cedula = cedula;
       }
-      body.cedula = cedula;
-    }
 
-    // Validación de pasaporte (si existe)
+      // Pasaporte (si existe)
       if (pasaporte) {
-      if (!validarPasaporte(pasaporte)) {
-        setMensaje("Pasaporte inválido, debe tener entre 6 y 10 caracteres alfanuméricos.");
-        return;
+        if (!validarPasaporte(pasaporte)) {
+          setMensaje(
+            `Pasaporte inválido: use ${PASAPORTE_MIN}-${PASAPORTE_MAX} caracteres alfanuméricos.`
+          );
+          return;
+        }
+        body.pasaporte = normalizarPasaporte(pasaporte);
       }
-      body.pasaporte = pasaporte;
-    }
+
       body.nombres = nombres;
       body.empresa = empresa;
       body.contacto = contacto;
@@ -282,7 +286,6 @@ export default function ControlVisitasVisual() {
     }
   };
 
-  // Crear visita
   const crearVisita = async () => {
     setMensaje("");
     if (!visitanteEncontrado || !areaSeleccionada || !aQuienVisita || !motivo) {
@@ -310,7 +313,7 @@ export default function ControlVisitasVisual() {
       const data = await res.json();
       setMensaje("Visita creada correctamente con id " + data.id);
 
-// Limpiar formulario
+      // Limpiar formulario
       setCedula("");
       setPasaporte("");
       setVisitanteEncontrado(null);
@@ -318,74 +321,17 @@ export default function ControlVisitasVisual() {
       setAQuienVisita("");
       setMotivo("");
 
-      // Actualiza la tabla automaticament
+      // Actualiza la tabla automáticamente
       cargarVisitas();
-
-      // Opcional: actualizar lista de visitas
-      // (puedes llamar la función cargar() que tienes arriba o similar)
     } catch (err) {
       console.error(err);
       setMensaje("Error al crear visita");
     }
   };
 
-  // Renderizado formulario visitante nuevo (simplificado)
-  const FormularioAgregarVisitante = () => {
-    const [nombres, setNombres] = useState("");
-    const [empresa, setEmpresa] = useState("");
-    const [contacto, setContacto] = useState("");
-
-    return (
-      <div className="border p-4 rounded bg-gray-50 my-4">
-        <h3 className="font-semibold mb-2">Registrar nuevo visitante</h3>
-        <input
-          type="text"
-          placeholder="Nombres completos"
-          value={nombres}
-          onChange={(e) => setNombres(e.target.value)}
-          className="border p-2 mb-2 w-full"
-        />
-        <input
-          type="text"
-          placeholder="Empresa"
-          value={empresa}
-          onChange={(e) => setEmpresa(e.target.value)}
-          className="border p-2 mb-2 w-full"
-        />
-        <input
-          type="text"
-          placeholder="Email o Teléfono de contacto"
-          value={contacto}
-          onChange={(e) => setContacto(e.target.value)}
-          className="border p-2 mb-2 w-full"
-        />
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-          onClick={() => agregarVisitante(nombres, empresa, contacto)}
-        >
-          Agregar Visitante
-        </button>
-      </div>
-    );
-  };
-
+  // Carga inicial de visitas
   useEffect(() => {
-    const cargar = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}/obtenerVisitasDelDia`);
-        if (!res.ok) throw new Error("Error al obtener visitas");
-        const data = await res.json();
-        setVisitas(data.map(normalizarVisita));
-        setErrorFetch("");
-      } catch (err) {
-        console.error(err);
-        setErrorFetch("No se pudo conectar al servidor");
-      } finally {
-        setLoading(false);
-      }
-    };
-    cargar();
+    cargarVisitas();
   }, []);
 
   const actualizarEstado = async (id, estado, observacion = "") => {
@@ -483,7 +429,7 @@ export default function ControlVisitasVisual() {
       />
 
       <div>
-        {/* Sección nueva para buscar/agregar visitante y crear visita */}
+        {/* Sección para buscar/agregar visitante y crear visita */}
         <section className="bg-white rounded p-6 shadow my-6">
           <h2 className="text-xl font-bold mb-4">Buscar o Agregar Visitante</h2>
 
@@ -492,23 +438,38 @@ export default function ControlVisitasVisual() {
               placeholder="Cédula"
               value={cedula}
               onChange={(e) => {
-              const valor = e.target.value;
-              setCedula(valor);
-              if (valor.length === 10 && !validarCedulaEcuatoriana(valor)) {
-              setMensaje("Cédula inválida");
-              } else {
-              setMensaje("");
-               }
-               }}
-                className="border p-2 rounded flex-grow"
+                const valor = e.target.value;
+                setCedula(valor);
+                if (valor && valor.length === 10 && !validarCedulaEcuatoriana(valor)) {
+                  setMensaje("Cédula inválida");
+                } else {
+                  setMensaje("");
+                }
+              }}
+              className="border p-2 rounded flex-grow"
             />
 
             <input
               placeholder="Pasaporte"
               value={pasaporte}
-              onChange={(e) => setPasaporte(e.target.value)}
-              className="border p-2 rounded flex-grow"
+              onChange={(e) => {
+                const v = normalizarPasaporte(e.target.value);
+                setPasaporte(v);
+                if (v && !validarPasaporte(v)) {
+                  setMensaje(
+                    `Pasaporte inválido: use ${PASAPORTE_MIN}-${PASAPORTE_MAX} caracteres alfanuméricos (A–Z, 0–9).`
+                  );
+                } else {
+                  setMensaje("");
+                }
+              }}
+              className={`border p-2 rounded flex-grow ${
+                pasaporte && !validarPasaporte(pasaporte)
+                  ? "border-red-500 ring-1 ring-red-300"
+                  : ""
+              }`}
             />
+
             <button
               onClick={buscarVisitante}
               className="bg-indigo-600 text-white px-4 rounded"
@@ -520,7 +481,7 @@ export default function ControlVisitasVisual() {
           {mensaje && <p className="mb-4 text-red-600">{mensaje}</p>}
 
           {visitanteEncontrado ? (
-            <div className="mb-4 p-4 bg-green-100 rounded">
+            <div className="bg-blue-100 p-4 rounded">
               <p>
                 <b>ID:</b> {visitanteEncontrado.id}
               </p>
@@ -579,8 +540,8 @@ export default function ControlVisitasVisual() {
               </button>
             </div>
           ) : (
-            // Si no encontró visitante y mensaje indica que debe agregar
-            mensaje.includes("no encontrado") && <FormularioAgregarVisitante />
+            // Si no encontró visitante y el mensaje indica que debe agregar
+            mensaje.includes("no encontrado") && <FormularioAgregarVisitante agregarVisitante={agregarVisitante} />
           )}
         </section>
       </div>
@@ -630,7 +591,7 @@ const Tarjetas = ({ total, hoy, pendientes, activas, areas }) => (
   <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
     <Card icon="👥" color="indigo" label="Total" value={total} />
     <Card icon="📅" color="green" label="Hoy" value={hoy} />
-    <Card icon="⏳" color="yellow" label="Pendientes" value={pendientes} />
+    <Card icon="⏳" color="yellow" label="Por Ingresar" value={pendientes} />
     <Card icon="🚪" color="blue" label="Activas" value={activas} />
     <Card icon="🏢" color="purple" label="Áreas" value={areas} />
   </div>
@@ -696,15 +657,14 @@ function BarraFiltros({
       >
         Limpiar
       </button>
-      {/*
+      {/* 
       <button
         onClick={() => exportCSV(filasExport)}
         className="bg-indigo-600 text-white px-3 py-2 rounded"
-        >
-          Exportar CSV
-        </button>
-        */}
-
+      >
+        Exportar CSV
+      </button>
+      */}
     </div>
   );
 }
@@ -763,14 +723,14 @@ function Tabla({ rows, onIngreso, onSalida, onDetalle }) {
                   {r.estado}
                 </span>
               </td>
-               {/* Mostrar hora de ingreso en formato HH:MM */}
+              {/* Hora de ingreso HH:MM */}
               <td className="p-3 text-center">
-              {r.ingreso ? r.ingreso.slice(0, 5) : "-"}
-              </td >        
+                {r.ingreso ? r.ingreso.slice(0, 5) : "-"}
+              </td>
 
-              {/* Mostrar hora de salid a en formato HH:MM */}
+              {/* Hora de salida HH:MM */}
               <td className="p-3 text-center">
-              {r.salida ? r.salida.slice(0, 5) : "-"}
+                {r.salida ? r.salida.slice(0, 5) : "-"}
               </td>
 
               <td className="p-3 space-x-1">
@@ -811,7 +771,6 @@ const ModalObservacion = ({ data, onCancel, onConfirm }) => {
       );
       return;
     }
-    // Si está marcada 'ninguna observación', enviamos un texto fijo o vacío
     onConfirm(ningunaObs ? "Ninguna observación" : texto.trim());
   };
 
@@ -921,8 +880,9 @@ const ModalVisita = ({ detalle, onClose }) => {
         <p className="mb-1">
           <b>Observaciones:</b> {r.observaciones ?? "-"}
         </p>
+
         <p className="mt-2 text-right text-xs text-gray-400">
-          Registrado por: {r.registradoPor}
+          Registrado por ID: {r.registradoPor}
         </p>
       </div>
     </div>
@@ -948,6 +908,46 @@ function Paginacion({ page, setPage, total }) {
           {p}
         </button>
       ))}
+    </div>
+  );
+}
+
+/* ---------- Formulario agregar visitante ---------- */
+function FormularioAgregarVisitante({ agregarVisitante }) {
+  const [nombres, setNombres] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [contacto, setContacto] = useState("");
+
+  return (
+    <div className="border p-4 rounded bg-gray-50 my-4">
+      <h3 className="font-semibold mb-2">Registrar nuevo visitante</h3>
+      <input
+        type="text"
+        placeholder="Nombres completos"
+        value={nombres}
+        onChange={(e) => setNombres(e.target.value)}
+        className="border p-2 mb-2 w-full"
+      />
+      <input
+        type="text"
+        placeholder="Empresa"
+        value={empresa}
+        onChange={(e) => setEmpresa(e.target.value)}
+        className="border p-2 mb-2 w-full"
+      />
+      <input
+        type="text"
+        placeholder="Email "
+        value={contacto}
+        onChange={(e) => setContacto(e.target.value)}
+        className="border p-2 mb-2 w-full"
+      />
+      <button
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+        onClick={() => agregarVisitante(nombres, empresa, contacto)}
+      >
+        Agregar Visitante
+      </button>
     </div>
   );
 }
