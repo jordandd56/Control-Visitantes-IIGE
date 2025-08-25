@@ -114,7 +114,7 @@ export function validarEmpresa(v) {
   return '';
 }
 
-// Email 
+// Emails
 export function validarEmail(v) {
   const value = (v ?? '').trim();
   if (!value) return 'Requerido';
