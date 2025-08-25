@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import {
+  validateName,
+  validatePassword,
+  validateRole,
+  validateUsername,
+  validateDigits,
+  allowOnlyLettersKeyDown,
+} from "./utils/validators";
 
 export default function PanelGuardias() {
-  /* ------------------------------------------------------------------
-   * Estado del componente
-   * ------------------------------------------------------------------ */
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -19,36 +23,27 @@ export default function PanelGuardias() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
   const navigate = useNavigate();
 
   useEffect(() => {
-  const usuario = JSON.parse(localStorage.getItem("usuario"));
-  if (usuario?.rol_id !== 1) {
-    navigate("/inicio"); // Redirige si no es admin
-  }
-}, []);
+    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    if (usuario?.rol_id !== 1) navigate("/inicio");
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     nombre_completo: "",
     usuario: "",
     contrasena: "",
     rol_id: "",
-    codigoVerificacion: "", // Nuevo campo para código de verificación
+    codigoVerificacion: "",
   });
   const [errors, setErrors] = useState({});
 
-  /* ------------------------------------------------------------------
-   * Cálculos de paginación tabla
-   * ------------------------------------------------------------------ */
   const indiceUltimaFila = paginaActual * filasPorPagina;
   const indicePrimeraFila = indiceUltimaFila - filasPorPagina;
   const filasMostradas = usuarios.slice(indicePrimeraFila, indiceUltimaFila);
   const totalPaginas = Math.ceil(usuarios.length / filasPorPagina);
 
-  /* ------------------------------------------------------------------
-   * Funciones para obtener datos de los usuarios y roles
-   * ------------------------------------------------------------------ */
   const obtenerUsuarios = async () => {
     try {
       setLoading(true);
@@ -79,25 +74,41 @@ export default function PanelGuardias() {
     }
   };
 
-  /* ------------------------------------------------------------------
-   * Efecto inicial para cargar datos al montar el componente
-   * ------------------------------------------------------------------ */
   useEffect(() => {
     obtenerUsuarios();
     obtenerRoles();
   }, []);
 
-  /* ------------------------------------------------------------------
-   * Manejador para actualizar estado del formulario
-   * ------------------------------------------------------------------ */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Sanea en vivo según el campo
+    if (name === "usuario") {
+      // solo letras, números, punto, guion, guion_bajo
+      const v = value.replace(/[^A-Za-z0-9._-]/g, "");
+      setFormData((prev) => ({ ...prev, [name]: v }));
+      return;
+    }
+    if (name === "codigoVerificacion") {
+      const v = value.replace(/\D+/g, ""); // solo dígitos
+      setFormData((prev) => ({ ...prev, [name]: v }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ------------------------------------------------------------------
-   * Función para resetear estado y cerrar modal
-   * ------------------------------------------------------------------ */
+  // Valida un campo individual (para onBlur)
+  const validateField = (name, value) => {
+    let msg = "";
+    if (name === "nombre_completo") msg = validateName(value);
+    if (name === "usuario") msg = validateUsername(value);
+    if (name === "contrasena") msg = validatePassword(value);
+    if (name === "rol_id") msg = validateRole(value);
+    if (name === "codigoVerificacion") msg = validateDigits(value);
+    setErrors((er) => ({ ...er, [name]: msg }));
+  };
+
   const resetModal = () => {
     setFormData({
       nombre_completo: "",
@@ -112,37 +123,31 @@ export default function PanelGuardias() {
     setShowModal(false);
   };
 
-  /* ------------------------------------------------------------------
-   * Manejador para enviar formulario (crear o editar contraseña)
-   * ------------------------------------------------------------------ */
+  // Valida todos los campos necesarios según modo
+  const validateAll = () => {
+    const er = {};
+    if (!editMode) {
+      er.nombre_completo = validateName(formData.nombre_completo);
+      er.usuario = validateUsername(formData.usuario);
+      er.contrasena = validatePassword(formData.contrasena);
+      er.rol_id = validateRole(formData.rol_id);
+    } else {
+      er.contrasena = validatePassword(formData.contrasena);
+      er.codigoVerificacion = validateDigits(formData.codigoVerificacion);
+    }
+    Object.keys(er).forEach((k) => !er[k] && delete er[k]);
+    setErrors(er);
+    return Object.keys(er).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors((prev) => ({ ...prev, general: "" }));
 
-    // Validación simple para usuario en creación
-    if (formData.usuario.trim() === "" && !editMode) {
-      setErrors({ usuario: "El nombre de usuario no puede estar vacío." });
-      return;
-    }
-
-    if (editMode) {
-      // Validar contraseña y código de verificación para actualización
-      if (formData.contrasena.trim() === "") {
-        setErrors({
-          contrasena: "La contraseña no puede estar vacía al actualizar.",
-        });
-        return;
-      }
-      if (formData.codigoVerificacion.trim() === "") {
-        setErrors({
-          codigoVerificacion: "El código de verificación es obligatorio.",
-        });
-        return;
-      }
-    }
+    if (!validateAll()) return;
 
     try {
       if (editMode) {
-        // En modo edición, actualizamos solo la contraseña con código de verificación
         const res = await fetch(
           `https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/usuarios/actualizarContrasena/${currentUserId}`,
           {
@@ -155,13 +160,12 @@ export default function PanelGuardias() {
           }
         );
         if (!res.ok) {
-          const errorData = await res.json();
+          const errorData = await res.json().catch(() => ({}));
           throw new Error(
             errorData.message || "Error al actualizar la contraseña"
           );
         }
       } else {
-        // En modo creación, creamos usuario nuevo
         const res = await fetch(
           "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/usuarios/agregar",
           {
@@ -170,20 +174,20 @@ export default function PanelGuardias() {
             body: JSON.stringify(formData),
           }
         );
-        if (!res.ok) throw new Error("Error al registrar usuario");
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.message || "Error al registrar usuario");
+        }
       }
 
-      await obtenerUsuarios(); // Refrescar tabla
-      resetModal(); // Cerrar modal y limpiar formulario
+      await obtenerUsuarios();
+      resetModal();
     } catch (err) {
       console.error("Error en el registro / actualización:", err);
-      setErrors({ general: err.message });
+      setErrors((prev) => ({ ...prev, general: err.message || "Error" }));
     }
   };
 
-  /* ------------------------------------------------------------------
-   * Manejador para abrir modal en modo edición y cargar datos usuario
-   * ------------------------------------------------------------------ */
   const handleEditClick = (u) => {
     setEditMode(true);
     setCurrentUserId(u.id);
@@ -198,17 +202,23 @@ export default function PanelGuardias() {
     setShowModal(true);
   };
 
-  /* ------------------------------------------------------------------
-   * Renderizado del componente
-   * ------------------------------------------------------------------ */
+  const creationValid =
+    !editMode &&
+    !validateName(formData.nombre_completo) &&
+    !validateUsername(formData.usuario) &&
+    !validatePassword(formData.contrasena) &&
+    !validateRole(formData.rol_id);
+
+  const editValid =
+    editMode &&
+    !validatePassword(formData.contrasena) &&
+    !validateDigits(formData.codigoVerificacion);
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-5xl rounded-2xl bg-white p-6 shadow-md">
-        {/* Encabezado */}
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Gestión de Guardias
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-800">Gestión de Guardias</h1>
           <button
             onClick={() => {
               setEditMode(false);
@@ -220,6 +230,7 @@ export default function PanelGuardias() {
                 rol_id: "",
                 codigoVerificacion: "",
               });
+              setErrors({});
               setShowModal(true);
             }}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
@@ -228,14 +239,12 @@ export default function PanelGuardias() {
           </button>
         </div>
 
-        {/* Mensajes de carga y error */}
         {loading && <p className="text-center">Cargando usuarios…</p>}
         {error && <p className="text-center text-red-600">{error}</p>}
         {errors.general && (
           <p className="mb-4 text-center text-red-600">{errors.general}</p>
         )}
 
-        {/* Tabla de usuarios */}
         {!loading && !error && (
           <>
             <div className="overflow-x-auto">
@@ -250,15 +259,10 @@ export default function PanelGuardias() {
                 </thead>
                 <tbody>
                   {filasMostradas.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-b last:border-b-0 hover:bg-gray-50"
-                    >
+                    <tr key={u.id} className="border-b last:border-b-0 hover:bg-gray-50">
                       <td className="px-4 py-3">{u.nombre_completo}</td>
                       <td className="px-4 py-3">{u.usuario}</td>
-                      <td className="px-4 py-3">
-                        {u.rol?.nombre || "Sin rol"}
-                      </td>
+                      <td className="px-4 py-3">{u.rol?.nombre || "Sin rol"}</td>
                       <td className="px-4 py-3 text-center">
                         <button
                           title="Editar contraseña"
@@ -274,7 +278,6 @@ export default function PanelGuardias() {
               </table>
             </div>
 
-            {/* Controles de paginación */}
             <div className="mt-4 flex justify-center space-x-2">
               <button
                 disabled={paginaActual === 1}
@@ -319,12 +322,14 @@ export default function PanelGuardias() {
         )}
       </div>
 
-      {/* Modal para agregar o editar */}
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) resetModal();
+          }}
         >
           <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="mb-4 text-xl font-bold text-gray-800">
@@ -332,55 +337,86 @@ export default function PanelGuardias() {
             </h2>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              {/* En modo creación mostramos más campos */}
               {!editMode && (
                 <>
                   <input
                     type="text"
                     name="nombre_completo"
                     placeholder="Nombre completo"
-                    className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${
+                      errors.nombre_completo
+                        ? "border-red-400 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     value={formData.nombre_completo}
                     onChange={handleInputChange}
+                    onBlur={(e) => validateField(e.target.name, e.target.value)}
+                    onKeyDown={allowOnlyLettersKeyDown}
+                    inputMode="text"
+                    autoComplete="name"
                     required
                   />
+                  {errors.nombre_completo && (
+                    <p className="text-sm text-red-600">{errors.nombre_completo}</p>
+                  )}
 
                   <input
                     type="text"
                     name="usuario"
                     placeholder="Usuario"
-                    className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${
+                      errors.usuario
+                        ? "border-red-400 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     value={formData.usuario}
                     onChange={handleInputChange}
+                    onBlur={(e) => validateField(e.target.name, e.target.value)}
+                    autoComplete="username"
                     required
                   />
+                  {errors.usuario && (
+                    <p className="text-sm text-red-600">{errors.usuario}</p>
+                  )}
                 </>
               )}
 
-              {/* Contraseña siempre visible */}
               <input
                 type="password"
                 name="contrasena"
                 placeholder={editMode ? "Nueva contraseña" : "Contraseña"}
-                className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${
+                  errors.contrasena
+                    ? "border-red-400 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
                 value={formData.contrasena}
                 onChange={handleInputChange}
+                onBlur={(e) => validateField(e.target.name, e.target.value)}
+                autoComplete={editMode ? "new-password" : "new-password"}
+                minLength={8}
                 required
               />
               {errors.contrasena && (
                 <p className="text-sm text-red-600">{errors.contrasena}</p>
               )}
 
-              {/* Código de verificación solo en edición */}
               {editMode && (
                 <>
                   <input
-                    type="password"
+                    type="text"
                     name="codigoVerificacion"
                     placeholder="Código de verificación"
-                    className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${
+                      errors.codigoVerificacion
+                        ? "border-red-400 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     value={formData.codigoVerificacion}
                     onChange={handleInputChange}
+                    onBlur={(e) => validateField(e.target.name, e.target.value)}
+                    inputMode="numeric"
+                    maxLength={12}
                     required
                   />
                   {errors.codigoVerificacion && (
@@ -391,7 +427,6 @@ export default function PanelGuardias() {
                 </>
               )}
 
-              {/* Selector de rol solo en creación */}
               {!editMode && (
                 <>
                   <label className="block text-sm font-medium text-gray-700">
@@ -399,9 +434,14 @@ export default function PanelGuardias() {
                   </label>
                   <select
                     name="rol_id"
-                    className="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${
+                      errors.rol_id
+                        ? "border-red-400 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     value={formData.rol_id}
                     onChange={handleInputChange}
+                    onBlur={(e) => validateField(e.target.name, e.target.value)}
                     required
                   >
                     <option value="">Seleccione un rol</option>
@@ -411,10 +451,12 @@ export default function PanelGuardias() {
                       </option>
                     ))}
                   </select>
+                  {errors.rol_id && (
+                    <p className="text-sm text-red-600">{errors.rol_id}</p>
+                  )}
                 </>
               )}
 
-              {/* Botones cancelar y guardar/actualizar */}
               <div className="mt-4 flex justify-end gap-3">
                 <button
                   type="button"
@@ -425,7 +467,16 @@ export default function PanelGuardias() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                  disabled={editMode ? !editValid : !creationValid}
+                  className={`rounded-md px-4 py-2 text-white transition ${
+                    editMode
+                      ? editValid
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : "cursor-not-allowed bg-blue-300"
+                      : creationValid
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "cursor-not-allowed bg-blue-300"
+                  }`}
                 >
                   {editMode ? "Actualizar" : "Guardar"}
                 </button>

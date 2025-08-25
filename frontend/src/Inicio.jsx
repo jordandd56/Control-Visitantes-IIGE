@@ -1,8 +1,18 @@
-/* --------------------------------------------------------------------
- * ControlVisitasVisual.jsx – Pantalla completa de control de visitantes
- * Conectada a backend Express (Visitas + datos del Visitante/Área/Usuario)
- * ------------------------------------------------------------------ */
+
 import { useEffect, useMemo, useState } from "react";
+
+// Validadores centralizados
+import {
+  validarCedulaEcuatoriana,
+  validarPasaporte,
+  normalizarPasaporte,
+  PASAPORTE_MIN,
+  PASAPORTE_MAX,
+  validarNombrePersona,
+  validarMotivo,
+  validarEmpresa,
+  validarEmail,
+} from "./utils/validators";
 
 const API_BASE =
   "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/visitas";
@@ -13,9 +23,7 @@ const API_BASE_VISITANTES =
 const API_BASE_AREAS =
   "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/areas";
 
-/* -------------------------------------------------- */
-/* Helpers */
-/* -------------------------------------------------- */
+/* ------------------------------ Helpers ------------------------------ */
 const normalizarVisita = (v) => {
   let estadoUI = "Pendiente";
   if (v.estado === "ingreso") {
@@ -26,16 +34,32 @@ const normalizarVisita = (v) => {
     estadoUI = "Rechazado";
   }
 
+  // ── Documento cédula
+  const ced = v?.Visitante?.cedula ?? null;
+  const pas = v?.Visitante?.pasaporte ?? null;
+  const documento = ced ?? pas ?? null;
+  const documentoLabel = ced ? "Cédula" : pas ? "Pasaporte" : null;
+
   return {
     id: v.id,
+
+    // Visitante
     nombre: v.Visitante?.nombres ?? "-",
     empresa: v.Visitante?.empresa ?? "-",
     contacto: v.Visitante?.contacto ?? "-",
+
+    // Guarda también crudos por si los necesitas
+    cedula: ced || "",
+    pasaporte: pas || "",
+    documento,
+    documentoLabel,
+
+    // Visita
     motivo: v.motivo,
     personaVisitada: v.a_quien_visita,
     area: v.Area?.nombre ?? "-",
     fecha: v.fecha,
-    hora: (v.hora_ingreso || v.hora)?.slice(0, 5), // Solo HH:MM
+    hora: (v.hora_ingreso || v.hora)?.slice(0, 5),
     ingreso: v.hora_ingreso?.slice(0, 5),
     salida: v.hora_salida?.slice(0, 5),
     estado: estadoUI,
@@ -43,6 +67,8 @@ const normalizarVisita = (v) => {
     registradoPor: v.Usuario?.nombre_completo ?? "-",
   };
 };
+
+
 
 const bkColor = {
   Pendiente: "bg-yellow-400",
@@ -91,77 +117,50 @@ function exportCSV(filas) {
   link.click();
 }
 
-/* =============== VALIDACION DE CEDULA DE IDENTIDAD ================== */
-function validarCedulaEcuatoriana(cedula) {
-  if (!/^\d{10}$/.test(cedula)) return false;
-
-  const provincia = parseInt(cedula.substring(0, 2), 10);
-  const tercerDigito = parseInt(cedula[2], 10);
-
-  if (!((provincia >= 1 && provincia <= 24) || provincia === 30)) return false;
-  if (tercerDigito > 6) return false;
-
-  const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
-  let suma = 0;
-
-  for (let i = 0; i < 9; i++) {
-    let valor = parseInt(cedula[i], 10) * coeficientes[i];
-    if (valor >= 10) valor -= 9;
-    suma += valor;
-  }
-
-  const decenaSuperior = Math.ceil(suma / 10) * 10;
-  const digitoVerificadorCalculado = decenaSuperior - suma;
-  const digitoVerificadorReal = parseInt(cedula[9], 10);
-
-  return digitoVerificadorCalculado === digitoVerificadorReal;
-}
-
-/* =============== VALIDACION DE PASAPORTE ============================ */
-/* Reglas:
-   - Solo alfanumérico (A–Z, 0–9)
-   - Longitud: 6 a 10
-   - Se normaliza: quita símbolos/espacios y pasa a MAYÚSCULAS
-   - (Opcional) exigir al menos una letra y un número (ver línea comentada)
-*/
-const PASAPORTE_MIN = 6;
-const PASAPORTE_MAX = 10;
-
-function normalizarPasaporte(valor) {
-  if (!valor) return "";
-  return valor.toString().toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-function validarPasaporte(valor) {
-  const v = normalizarPasaporte(valor);
-  if (v.length < PASAPORTE_MIN || v.length > PASAPORTE_MAX) return false;
-  // Si tu institución exige al menos una letra Y un número, descomenta:
-  // if (!/[A-Z]/.test(v) || !/\d/.test(v)) return false;
-  return /^[A-Z0-9]+$/.test(v);
-}
 
 export default function ControlVisitasVisual() {
+  // Tabla / datos
   const [visitas, setVisitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorFetch, setErrorFetch] = useState("");
+
+  // Filtros tabla
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroArea, setFiltroArea] = useState("");
   const [pagina, setPagina] = useState(1);
   const [filasPorPagina, setFilasPorPagina] = useState(10);
+
+  // Modales
   const [modal, setModal] = useState(null);
   const [modalObservacion, setModalObservacion] = useState(null);
 
+  // Crear/Buscar visitante y crear visita
   const [cedula, setCedula] = useState("");
   const [pasaporte, setPasaporte] = useState("");
   const [visitanteEncontrado, setVisitanteEncontrado] = useState(null);
+
   const [areas, setAreas] = useState([]);
   const [areaSeleccionada, setAreaSeleccionada] = useState("");
   const [aQuienVisita, setAQuienVisita] = useState("");
   const [motivo, setMotivo] = useState("");
-  const [registradoPor, setRegistradoPor] = useState(38); // tu id de usuario
+
+  const [registradoPor] = useState(38); // id de usuario que registra
   const [mensaje, setMensaje] = useState("");
 
+  // Errores UI
+  const [errors, setErrors] = useState({
+    cedula: "",
+    pasaporte: "",
+    aQuienVisita: "",
+    motivo: "",
+    area: "",
+    nombres: "",
+    empresa: "",
+    contacto: "",
+  });
+
+  // Cargar visitas del día
   const cargarVisitas = async () => {
     setLoading(true);
     try {
@@ -178,6 +177,7 @@ export default function ControlVisitasVisual() {
     }
   };
 
+  // Cargar áreas
   useEffect(() => {
     const cargarAreas = async () => {
       try {
@@ -192,26 +192,28 @@ export default function ControlVisitasVisual() {
     cargarAreas();
   }, []);
 
+  /* -------------------- Buscar visitante por cédula/pasaporte -------------------- */
   const buscarVisitante = async () => {
     setMensaje("");
     setVisitanteEncontrado(null);
+
+    // Validaciones previas
+    const e = { ...errors };
+    e.cedula = "";
+    e.pasaporte = "";
 
     if (!cedula && !pasaporte) {
       setMensaje("Debe ingresar cédula o pasaporte");
       return;
     }
-
     if (cedula && !validarCedulaEcuatoriana(cedula)) {
-      setMensaje("Cédula inválida, por favor revise el número ingresado");
-      return;
+      e.cedula = "Cédula inválida";
     }
-
     if (pasaporte && !validarPasaporte(pasaporte)) {
-      setMensaje(
-        `Pasaporte inválido: use ${PASAPORTE_MIN}-${PASAPORTE_MAX} caracteres alfanuméricos.`
-      );
-      return;
+      e.pasaporte = `Pasaporte inválido (A–Z, 0–9, ${PASAPORTE_MIN}-${PASAPORTE_MAX})`;
     }
+    setErrors(e);
+    if (e.cedula || e.pasaporte) return;
 
     try {
       const params = new URLSearchParams();
@@ -221,6 +223,7 @@ export default function ControlVisitasVisual() {
       const res = await fetch(
         `${API_BASE_VISITANTES}/buscarVisitante?${params.toString()}`
       );
+
       if (!res.ok) {
         if (res.status === 404) {
           setMensaje(
@@ -240,13 +243,21 @@ export default function ControlVisitasVisual() {
     }
   };
 
+  /* ----------------------- Agregar visitante (nuevo) ----------------------- */
   const agregarVisitante = async (nombres, empresa, contacto) => {
     setMensaje("");
+    const e = { ...errors };
+
+    e.nombres = validarNombrePersona(nombres);
+    e.empresa = validarEmpresa(empresa);
+    e.contacto = validarEmail(contacto);
+
+    setErrors(e);
+    if (e.nombres || e.empresa || e.contacto) return;
 
     try {
       const body = {};
 
-      // Cédula (si existe)
       if (cedula) {
         if (!validarCedulaEcuatoriana(cedula)) {
           setMensaje("Cédula inválida.");
@@ -255,7 +266,6 @@ export default function ControlVisitasVisual() {
         body.cedula = cedula;
       }
 
-      // Pasaporte (si existe)
       if (pasaporte) {
         if (!validarPasaporte(pasaporte)) {
           setMensaje(
@@ -266,9 +276,9 @@ export default function ControlVisitasVisual() {
         body.pasaporte = normalizarPasaporte(pasaporte);
       }
 
-      body.nombres = nombres;
-      body.empresa = empresa;
-      body.contacto = contacto;
+      body.nombres = nombres.trim();
+      body.empresa = empresa.trim();
+      body.contacto = contacto.trim();
 
       const res = await fetch(`${API_BASE_VISITANTES}/agregarVisitante`, {
         method: "POST",
@@ -286,19 +296,29 @@ export default function ControlVisitasVisual() {
     }
   };
 
+  /* ---------------------------- Crear visita ---------------------------- */
   const crearVisita = async () => {
     setMensaje("");
-    if (!visitanteEncontrado || !areaSeleccionada || !aQuienVisita || !motivo) {
-      setMensaje("Complete todos los campos para crear la visita");
+
+    const e = { ...errors };
+    e.aQuienVisita = validarNombrePersona(aQuienVisita);
+    e.motivo = validarMotivo(motivo);
+    e.area = areaSeleccionada ? "" : "Seleccione un área";
+    setErrors(e);
+
+    if (e.aQuienVisita || e.motivo || e.area) return;
+
+    if (!visitanteEncontrado) {
+      setMensaje("Busque o agregue un visitante antes de crear la visita");
       return;
     }
 
     try {
       const body = {
         visitante_id: visitanteEncontrado.id,
-        a_quien_visita: aQuienVisita,
-        area_id: parseInt(areaSeleccionada),
-        motivo,
+        a_quien_visita: aQuienVisita.trim(),
+        area_id: parseInt(areaSeleccionada, 10),
+        motivo: motivo.trim(),
         registrado_por: registradoPor,
         observacion: "Visita programada",
       };
@@ -321,8 +341,7 @@ export default function ControlVisitasVisual() {
       setAQuienVisita("");
       setMotivo("");
 
-      // Actualiza la tabla automáticamente
-      cargarVisitas();
+      await cargarVisitas();
     } catch (err) {
       console.error(err);
       setMensaje("Error al crear visita");
@@ -334,6 +353,7 @@ export default function ControlVisitasVisual() {
     cargarVisitas();
   }, []);
 
+  // Actualizar estado visita
   const actualizarEstado = async (id, estado, observacion = "") => {
     try {
       const body = { estado };
@@ -358,12 +378,14 @@ export default function ControlVisitasVisual() {
     }
   };
 
+  // KPIs
   const hoyISO = new Date().toISOString().slice(0, 10);
   const total = visitas.length;
   const hoy = visitas.filter((v) => v.fecha === hoyISO).length;
   const pendientes = visitas.filter((v) => v.estado === "Pendiente").length;
   const activas = visitas.filter((v) => v.ingreso && !v.salida).length;
 
+  // Filtros visuales
   const filt = useMemo(
     () =>
       visitas.filter((v) => {
@@ -430,99 +452,165 @@ export default function ControlVisitasVisual() {
 
       <div>
         {/* Sección para buscar/agregar visitante y crear visita */}
-        <section className="bg-white rounded p-6 shadow my-6">
-          <h2 className="text-xl font-bold mb-4">Buscar o Agregar Visitante</h2>
+        <section className="bg-white rounded-xl p-6 shadow my-6 border border-indigo-100">
+          <h2 className="text-xl font-bold mb-4 text-indigo-800">
+            Buscar o Agregar Visitante
+          </h2>
 
-          <div className="flex gap-4 mb-4">
-            <input
-              placeholder="Cédula"
-              value={cedula}
-              onChange={(e) => {
-                const valor = e.target.value;
-                setCedula(valor);
-                if (valor && valor.length === 10 && !validarCedulaEcuatoriana(valor)) {
-                  setMensaje("Cédula inválida");
-                } else {
-                  setMensaje("");
-                }
-              }}
-              className="border p-2 rounded flex-grow"
-            />
+          {/* Búsqueda por cédula/pasaporte */}
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <input
+                placeholder="Cédula"
+                value={cedula}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setCedula(v);
+                  setErrors((p) => ({
+                    ...p,
+                    cedula:
+                      v && v.length === 10 && !validarCedulaEcuatoriana(v)
+                        ? "Cédula inválida"
+                        : "",
+                  }));
+                }}
+                className={`border p-2 rounded w-full ${
+                  errors.cedula ? "border-red-500 ring-1 ring-red-300" : ""
+                }`}
+              />
+              {errors.cedula && (
+                <p className="text-sm text-red-600 mt-1">{errors.cedula}</p>
+              )}
+            </div>
 
-            <input
-              placeholder="Pasaporte"
-              value={pasaporte}
-              onChange={(e) => {
-                const v = normalizarPasaporte(e.target.value);
-                setPasaporte(v);
-                if (v && !validarPasaporte(v)) {
-                  setMensaje(
-                    `Pasaporte inválido: use ${PASAPORTE_MIN}-${PASAPORTE_MAX} caracteres alfanuméricos (A–Z, 0–9).`
-                  );
-                } else {
-                  setMensaje("");
-                }
-              }}
-              className={`border p-2 rounded flex-grow ${
-                pasaporte && !validarPasaporte(pasaporte)
-                  ? "border-red-500 ring-1 ring-red-300"
-                  : ""
-              }`}
-            />
+            <div className="flex-1">
+              <input
+                placeholder="Pasaporte"
+                value={pasaporte}
+                onChange={(e) => {
+                  const v = normalizarPasaporte(e.target.value).slice(0, 12);
+                  setPasaporte(v);
+                  setErrors((p) => ({
+                    ...p,
+                    pasaporte:
+                      v && !validarPasaporte(v)
+                        ? `Pasaporte inválido (A–Z, 0–9, ${PASAPORTE_MIN}-${PASAPORTE_MAX})`
+                        : "",
+                  }));
+                }}
+                className={`border p-2 rounded w-full ${
+                  errors.pasaporte ? "border-red-500 ring-1 ring-red-300" : ""
+                }`}
+              />
+              {errors.pasaporte && (
+                <p className="text-sm text-red-600 mt-1">{errors.pasaporte}</p>
+              )}
+            </div>
 
             <button
               onClick={buscarVisitante}
-              className="bg-indigo-600 text-white px-4 rounded"
+              className="bg-indigo-600 text-white px-4 rounded h-10 md:h-auto"
             >
               Buscar
             </button>
           </div>
 
-          {mensaje && <p className="mb-4 text-red-600">{mensaje}</p>}
+          {mensaje && (
+            <p
+              className={`mb-4 ${
+                mensaje.toLowerCase().includes("error")
+                  ? "text-red-600"
+                  : "text-emerald-700"
+              }`}
+            >
+              {mensaje}
+            </p>
+          )}
 
+          {/* Datos del visitante encontrado o formulario de registro */}
           {visitanteEncontrado ? (
-            <div className="bg-blue-100 p-4 rounded">
-              <p>
-                <b>ID:</b> {visitanteEncontrado.id}
-              </p>
-              <p>
-                <b>Cédula:</b> {visitanteEncontrado.cedula || "-"}
-              </p>
-              <p>
-                <b>Pasaporte:</b> {visitanteEncontrado.pasaporte || "-"}
-              </p>
-              <p>
-                <b>Nombre:</b> {visitanteEncontrado.nombres}
-              </p>
-              <p>
-                <b>Empresa:</b> {visitanteEncontrado.empresa}
-              </p>
-              <p>
-                <b>Contacto:</b> {visitanteEncontrado.contacto}
-              </p>
+            <div className="bg-blue-50 border border-indigo-100 p-4 rounded-xl">
+              <div className="grid md:grid-cols-3 gap-2 text-sm">
+                <p>
+                  <b>ID:</b> {visitanteEncontrado.id}
+                </p>
+                <p>
+                  <b>Cédula:</b> {visitanteEncontrado.cedula || "-"}
+                </p>
+                <p>
+                  <b>Pasaporte:</b> {visitanteEncontrado.pasaporte || "-"}
+                </p>
+                <p className="md:col-span-3">
+                  <b>Nombre:</b> {visitanteEncontrado.nombres}
+                </p>
+                <p className="md:col-span-3">
+                  <b>Empresa:</b> {visitanteEncontrado.empresa}
+                </p>
+                <p className="md:col-span-3">
+                  <b>Contacto:</b> {visitanteEncontrado.contacto}
+                </p>
+              </div>
 
-              <h3 className="mt-4 font-semibold">Crear visita</h3>
+              <h3 className="mt-4 font-semibold text-indigo-800">
+                Crear visita
+              </h3>
 
               <input
                 type="text"
                 placeholder="A quién visita"
                 value={aQuienVisita}
-                onChange={(e) => setAQuienVisita(e.target.value)}
-                className="border p-2 rounded w-full mb-2"
+                onChange={(e) => {
+                  setAQuienVisita(e.target.value);
+                  setErrors((p) => ({
+                    ...p,
+                    aQuienVisita: validarNombrePersona(e.target.value),
+                  }));
+                }}
+                className={`border p-2 rounded w-full mb-2 ${
+                  errors.aQuienVisita
+                    ? "border-red-500 ring-1 ring-red-300"
+                    : ""
+                }`}
               />
+              {errors.aQuienVisita && (
+                <p className="text-sm text-red-600 -mt-1 mb-2">
+                  {errors.aQuienVisita}
+                </p>
+              )}
 
               <input
                 type="text"
                 placeholder="Motivo"
                 value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                className="border p-2 rounded w-full mb-2"
+                onChange={(e) => {
+                  setMotivo(e.target.value);
+                  setErrors((p) => ({
+                    ...p,
+                    motivo: validarMotivo(e.target.value),
+                  }));
+                }}
+                className={`border p-2 rounded w-full mb-2 ${
+                  errors.motivo ? "border-red-500 ring-1 ring-red-300" : ""
+                }`}
               />
+              {errors.motivo && (
+                <p className="text-sm text-red-600 -mt-1 mb-2">
+                  {errors.motivo}
+                </p>
+              )}
 
               <select
                 value={areaSeleccionada}
-                onChange={(e) => setAreaSeleccionada(e.target.value)}
-                className="border p-2 rounded w-full mb-2"
+                onChange={(e) => {
+                  setAreaSeleccionada(e.target.value);
+                  setErrors((p) => ({
+                    ...p,
+                    area: e.target.value ? "" : "Seleccione un área",
+                  }));
+                }}
+                className={`border p-2 rounded w-full mb-2 ${
+                  errors.area ? "border-red-500 ring-1 ring-red-300" : ""
+                }`}
               >
                 <option value="">Seleccione un área</option>
                 {areas.map((a) => (
@@ -531,6 +619,9 @@ export default function ControlVisitasVisual() {
                   </option>
                 ))}
               </select>
+              {errors.area && (
+                <p className="text-sm text-red-600 -mt-1 mb-2">{errors.area}</p>
+              )}
 
               <button
                 onClick={crearVisita}
@@ -540,8 +631,13 @@ export default function ControlVisitasVisual() {
               </button>
             </div>
           ) : (
-            // Si no encontró visitante y el mensaje indica que debe agregar
-            mensaje.includes("no encontrado") && <FormularioAgregarVisitante agregarVisitante={agregarVisitante} />
+            mensaje.includes("no encontrado") && (
+              <FormularioAgregarVisitante
+                agregarVisitante={agregarVisitante}
+                errors={errors}
+                setErrors={setErrors}
+              />
+            )
           )}
         </section>
       </div>
@@ -576,7 +672,8 @@ export default function ControlVisitasVisual() {
   );
 }
 
-/* ---------- Tarjetas ---------- */
+/* ============================ Subcomponentes ============================ */
+
 const Card = ({ icon, color, label, value }) => (
   <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
     <span className={`text-${color}-500 text-4xl mb-1`}>{icon}</span>
@@ -597,7 +694,6 @@ const Tarjetas = ({ total, hoy, pendientes, activas, areas }) => (
   </div>
 );
 
-/* ---------- Filtros + export ---------- */
 function BarraFiltros({
   busqueda,
   setBusqueda,
@@ -657,19 +753,11 @@ function BarraFiltros({
       >
         Limpiar
       </button>
-      {/* 
-      <button
-        onClick={() => exportCSV(filasExport)}
-        className="bg-indigo-600 text-white px-3 py-2 rounded"
-      >
-        Exportar CSV
-      </button>
-      */}
+      {/* <button onClick={() => exportCSV(filasExport)} className="bg-indigo-600 text-white px-3 py-2 rounded">Exportar CSV</button> */}
     </div>
   );
 }
 
-/* ---------- Tabla ---------- */
 function Tabla({ rows, onIngreso, onSalida, onDetalle }) {
   if (rows.length === 0)
     return <p className="text-center text-gray-500">Sin registros</p>;
@@ -723,16 +811,12 @@ function Tabla({ rows, onIngreso, onSalida, onDetalle }) {
                   {r.estado}
                 </span>
               </td>
-              {/* Hora de ingreso HH:MM */}
               <td className="p-3 text-center">
                 {r.ingreso ? r.ingreso.slice(0, 5) : "-"}
               </td>
-
-              {/* Hora de salida HH:MM */}
               <td className="p-3 text-center">
                 {r.salida ? r.salida.slice(0, 5) : "-"}
               </td>
-
               <td className="p-3 space-x-1">
                 {r.estado === "Pendiente" && (
                   <button
@@ -759,7 +843,6 @@ function Tabla({ rows, onIngreso, onSalida, onDetalle }) {
   );
 }
 
-/* ---------- Modal observación salida ---------- */
 const ModalObservacion = ({ data, onCancel, onConfirm }) => {
   const [texto, setTexto] = useState("");
   const [ningunaObs, setNingunaObs] = useState(false);
@@ -827,7 +910,6 @@ const ModalObservacion = ({ data, onCancel, onConfirm }) => {
   );
 };
 
-/* ---------- Modal detalle visita ---------- */
 const ModalVisita = ({ detalle, onClose }) => {
   const r = detalle;
   return (
@@ -852,6 +934,9 @@ const ModalVisita = ({ detalle, onClose }) => {
         <p className="mb-1">
           <b>Contacto:</b> {r.contacto}
         </p>
+        
+      
+       
         <p className="mb-1">
           <b>Motivo:</b> {r.motivo}
         </p>
@@ -889,7 +974,6 @@ const ModalVisita = ({ detalle, onClose }) => {
   );
 };
 
-/* ---------- Paginación ---------- */
 function Paginacion({ page, setPage, total }) {
   const pages = [];
   for (let i = 1; i <= total; i++) pages.push(i);
@@ -912,36 +996,80 @@ function Paginacion({ page, setPage, total }) {
   );
 }
 
-/* ---------- Formulario agregar visitante ---------- */
-function FormularioAgregarVisitante({ agregarVisitante }) {
+function FormularioAgregarVisitante({ agregarVisitante, errors, setErrors }) {
   const [nombres, setNombres] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [contacto, setContacto] = useState("");
 
   return (
-    <div className="border p-4 rounded bg-gray-50 my-4">
-      <h3 className="font-semibold mb-2">Registrar nuevo visitante</h3>
-      <input
-        type="text"
-        placeholder="Nombres completos"
-        value={nombres}
-        onChange={(e) => setNombres(e.target.value)}
-        className="border p-2 mb-2 w-full"
-      />
-      <input
-        type="text"
-        placeholder="Empresa"
-        value={empresa}
-        onChange={(e) => setEmpresa(e.target.value)}
-        className="border p-2 mb-2 w-full"
-      />
-      <input
-        type="text"
-        placeholder="Email "
-        value={contacto}
-        onChange={(e) => setContacto(e.target.value)}
-        className="border p-2 mb-2 w-full"
-      />
+    <div className="border p-4 rounded-xl bg-gray-50 my-4">
+      <h3 className="font-semibold mb-2 text-indigo-800">
+        Registrar nuevo visitante
+      </h3>
+
+      <div className="mb-2">
+        <input
+          type="text"
+          placeholder="Nombres completos"
+          value={nombres}
+          onChange={(e) => {
+            setNombres(e.target.value);
+            setErrors((p) => ({
+              ...p,
+              nombres: validarNombrePersona(e.target.value),
+            }));
+          }}
+          className={`border p-2 w-full rounded ${
+            errors.nombres ? "border-red-500 ring-1 ring-red-300" : ""
+          }`}
+        />
+        {errors.nombres && (
+          <p className="text-sm text-red-600 mt-1">{errors.nombres}</p>
+        )}
+      </div>
+
+      <div className="mb-2">
+        <input
+          type="text"
+          placeholder="Empresa"
+          value={empresa}
+          onChange={(e) => {
+            setEmpresa(e.target.value);
+            setErrors((p) => ({
+              ...p,
+              empresa: validarEmpresa(e.target.value),
+            }));
+          }}
+          className={`border p-2 w-full rounded ${
+            errors.empresa ? "border-red-500 ring-1 ring-red-300" : ""
+          }`}
+        />
+        {errors.empresa && (
+          <p className="text-sm text-red-600 mt-1">{errors.empresa}</p>
+        )}
+      </div>
+
+      <div className="mb-3">
+        <input
+          type="text"
+          placeholder="Email"
+          value={contacto}
+          onChange={(e) => {
+            setContacto(e.target.value);
+            setErrors((p) => ({
+              ...p,
+              contacto: validarEmail(e.target.value),
+            }));
+          }}
+          className={`border p-2 w-full rounded ${
+            errors.contacto ? "border-red-500 ring-1 ring-red-300" : ""
+          }`}
+        />
+        {errors.contacto && (
+          <p className="text-sm text-red-600 mt-1">{errors.contacto}</p>
+        )}
+      </div>
+
       <button
         className="bg-blue-600 text-white px-4 py-2 rounded"
         onClick={() => agregarVisitante(nombres, empresa, contacto)}
