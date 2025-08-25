@@ -1,4 +1,4 @@
-const Rol = require("../models/rol.model"); // ✅ correcto
+const Rol = require("../models/rol.model");
 const { Op } = require("sequelize");
 
 exports.obtenerRoles = async (req, res) => {

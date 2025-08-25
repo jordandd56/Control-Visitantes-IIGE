@@ -12,7 +12,7 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // Esto permite conexiones a Azure sin certificado CA
+        rejectUnauthorized: false,
       },
     },
   }

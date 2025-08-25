@@ -21,12 +21,12 @@ app.use("/api/roles", require("./routes/rol.routes"));
 app.use("/api/areas", require("./routes/areas.routes"));
 
 app.use("/api/visitas", require("./routes/visita.routes"));
-// Conexión y servidor
+
 sequelize
   .authenticate()
   .then(() => {
     console.log("Conectado a la base de datos PostgreSQL.");
-    return sequelize.sync(); // o .sync({ force: true }) si quieres reiniciar
+    return sequelize.sync();
   })
   .then(() => {
     app.listen(PORT, () => {

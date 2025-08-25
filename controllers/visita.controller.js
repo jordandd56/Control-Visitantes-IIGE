@@ -1,20 +1,18 @@
-// controllers/visita.controller.js
 const { Visita, Visitante, Area, Usuario } = require("../models");
 const { Op } = require("sequelize");
 
-// helper común: carga relaciones con los campos que quieres exponer
 const includeFullInfo = [
   {
     model: Visitante,
-    attributes: ["nombres", "empresa", "contacto"],
+    attributes: ["nombres", "empresa", "contacto", "cedula"],
   },
   {
     model: Area,
-    attributes: ["nombre"], // aliasará como area.nombre
+    attributes: ["nombre"],
   },
   {
     model: Usuario,
-    attributes: ["nombre_completo"], // quién registró
+    attributes: ["nombre_completo"],
   },
 ];
 
@@ -30,7 +28,6 @@ exports.crearVisita = async (req, res) => {
       estado,
     } = req.body;
 
-    // Convertir números
     const visitanteIdNum = Number(visitante_id);
     const areaIdNum = Number(area_id);
     const registradoPorNum = Number(registrado_por);
@@ -67,8 +64,6 @@ exports.crearVisita = async (req, res) => {
   }
 };
 
-/* B) actualizarEstadoVisita  */
-/* B) actualizarEstadoVisita  */
 exports.actualizarEstadoVisita = async (req, res) => {
   const { id } = req.params;
   const { estado, observacion } = req.body;
@@ -79,14 +74,12 @@ exports.actualizarEstadoVisita = async (req, res) => {
       return res.status(404).json({ message: "Visita no encontrada" });
     }
 
-    // Validar estado recibido
     if (!["ingreso", "salida"].includes(estado)) {
       return res.status(400).json({ message: "Estado inválido" });
     }
 
     visita.estado = estado;
 
-    // Si el estado es "salida" y hay observación, actualiza también
     if (estado === "salida" && observacion !== undefined) {
       visita.observacion = observacion;
     }
@@ -101,7 +94,6 @@ exports.actualizarEstadoVisita = async (req, res) => {
   }
 };
 
-/* C) obtenerVisitasActivas  */
 exports.obtenerVisitasActivas = async (_req, res) => {
   const activas = await Visita.findAll({
     where: { estado: "ingreso", hora_salida: { [Op.is]: null } },
@@ -110,7 +102,6 @@ exports.obtenerVisitasActivas = async (_req, res) => {
   res.json(activas);
 };
 
-/* D) obtenerVisitasDelDia  */
 exports.obtenerVisitasDelDia = async (_req, res) => {
   try {
     const ahora = new Date();
@@ -158,7 +149,6 @@ exports.obtenerReportePorCedula = async (req, res) => {
       ],
     });
 
-    // Si no hay visitas, responder con una frase informativa
     if (visitas.length === 0) {
       return res.json({
         titulo: "Registro de visitas",
@@ -174,7 +164,6 @@ exports.obtenerReportePorCedula = async (req, res) => {
       });
     }
 
-    // Contar áreas visitadas
     const conteoAreas = {};
     visitas.forEach((v) => {
       const area = v.Area?.nombre || "Desconocida";
@@ -228,7 +217,6 @@ La última visita fue el ${ultimaVisita.fecha} con motivo: "${
   }
 };
 
-// GET /api/visitas/reporte-por-fecha?fecha=YYYY-MM-DD
 exports.reportePorFecha = async (req, res) => {
   const { fecha } = req.query;
 
@@ -264,7 +252,6 @@ exports.reportePorFecha = async (req, res) => {
       });
     }
 
-    // Calcular resumen
     const visitantesUnicos = new Set();
     visitas.forEach((v) => {
       if (v.Visitante?.cedula) visitantesUnicos.add(v.Visitante.cedula);
@@ -277,7 +264,6 @@ exports.reportePorFecha = async (req, res) => {
       descripcion: `En la fecha ${fecha} ingresaron ${visitantesUnicos.size} persona(s) distintas, con un total de ${visitas.length} visita(s) registradas.`,
     };
 
-    // Armar respuesta
     const detalle = visitas.map((v) => ({
       visitante: {
         nombres: v.Visitante?.nombres,
@@ -304,7 +290,6 @@ exports.reportePorFecha = async (req, res) => {
   }
 };
 
-// GET /api/visitas/reporte-por-rango?fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD
 exports.reportePorRango = async (req, res) => {
   const { fechaInicio, fechaFin } = req.query;
 
@@ -347,7 +332,6 @@ exports.reportePorRango = async (req, res) => {
       });
     }
 
-    // ✅ Calcular resumen
     const visitantesUnicos = new Set();
     const contadorPersonas = {};
     const contadorAreas = {};
@@ -356,19 +340,16 @@ exports.reportePorRango = async (req, res) => {
       if (v.Visitante?.cedula) {
         visitantesUnicos.add(v.Visitante.cedula);
 
-        // Contar personas
         const nombre = v.Visitante.nombres;
         contadorPersonas[nombre] = (contadorPersonas[nombre] || 0) + 1;
       }
 
-      // Contar áreas
       if (v.Area?.nombre) {
         const area = v.Area.nombre;
         contadorAreas[area] = (contadorAreas[area] || 0) + 1;
       }
     });
 
-    // Obtener la persona más recurrente
     const personaTop = Object.entries(contadorPersonas).sort(
       (a, b) => b[1] - a[1]
     )[0];
@@ -395,7 +376,6 @@ exports.reportePorRango = async (req, res) => {
  }.`,
     };
 
-    // ✅ Armar respuesta detallada
     const detalle = visitas.map((v) => ({
       visitante: {
         nombres: v.Visitante?.nombres,

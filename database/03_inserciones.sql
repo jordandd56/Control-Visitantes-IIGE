@@ -22,7 +22,6 @@ END$$;
 CREATE OR REPLACE FUNCTION trg_visitas_set_horas()
 RETURNS TRIGGER AS $$
 BEGIN
-  /* INSERT ------------------------------------ */
   IF TG_OP = 'INSERT' THEN
      IF NEW.estado = 'ingreso' AND NEW.hora_ingreso IS NULL THEN
         NEW.hora_ingreso := (clock_timestamp() AT TIME ZONE 'America/Guayaquil')::time;
@@ -32,7 +31,6 @@ BEGIN
      RETURN NEW;
   END IF;
 
-  /* UPDATE ------------------------------------ */
   IF TG_OP = 'UPDATE' THEN
      IF NEW.estado = 'ingreso'
         AND OLD.estado IS DISTINCT FROM NEW.estado
@@ -57,13 +55,11 @@ $$ LANGUAGE plpgsql;
 /* ------------------------------------------------------------------ */
 /* 3.  Crear triggers                                                 */
 /* ------------------------------------------------------------------ */
--- Antes de insertar → establece hora_ingreso / hora_salida según estado
 CREATE TRIGGER trg_visitas_bi_set_horas
 BEFORE INSERT ON visitas
 FOR EACH ROW
 EXECUTE PROCEDURE trg_visitas_set_horas();
 
--- Antes de actualizar estado → actualiza hora_ingreso / hora_salida
 CREATE TRIGGER trg_visitas_bu_estado_horas
 BEFORE UPDATE OF estado ON visitas
 FOR EACH ROW

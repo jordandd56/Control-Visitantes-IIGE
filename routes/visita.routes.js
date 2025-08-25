@@ -6,9 +6,8 @@ const visitaCtrl = require("../controllers/visita.controller");
 router.post("/crearVisita", visitaCtrl.crearVisita);
 router.get("/obtenerVisitasDelDia", visitaCtrl.obtenerVisitasDelDia);
 
-/* NUEVAS */
-router.put("/:id/estado", visitaCtrl.actualizarEstadoVisita); // check‑in / check‑out
-router.get("/visitas/activas", visitaCtrl.obtenerVisitasActivas); // las que siguen dentro
+router.put("/:id/estado", visitaCtrl.actualizarEstadoVisita);
+router.get("/visitas/activas", visitaCtrl.obtenerVisitasActivas);
 
 router.get("/reporte-por-cedula", visitaCtrl.obtenerReportePorCedula);
 

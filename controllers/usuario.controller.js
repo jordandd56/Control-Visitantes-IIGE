@@ -1,8 +1,6 @@
-/* Controladores CRUD + login con bcrypt */
 const { Usuario, Rol } = require("../models");
 const { Op } = require("sequelize");
 
-/* ---------- POST /api/usuarios/login ---------- */
 exports.login = async (req, res) => {
   const { usuario, contrasena } = req.body;
 
@@ -30,7 +28,6 @@ exports.login = async (req, res) => {
   }
 };
 
-/* ---------- POST /api/usuarios ---------- */
 exports.agregarUsuario = async (req, res) => {
   const { nombre_completo, usuario, contrasena, rol_id } = req.body;
 
@@ -42,7 +39,6 @@ exports.agregarUsuario = async (req, res) => {
     if (existente)
       return res.status(409).json({ message: "Usuario ya existe" });
 
-    /* El hook beforeCreate cifrará la contraseña */
     const nuevoUsuario = await Usuario.create({
       nombre_completo,
       usuario,
@@ -61,7 +57,6 @@ exports.agregarUsuario = async (req, res) => {
   }
 };
 
-/* ---------- GET /api/usuarios ---------- */
 exports.obtenerUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuario.findAll({
@@ -76,7 +71,6 @@ exports.obtenerUsuarios = async (req, res) => {
   }
 };
 
-/* ---------- GET /api/usuarios/buscar?nombre_completo=... ---------- */
 exports.obtenerUsuariosPorNombre = async (req, res) => {
   const { nombre_completo } = req.query;
 
@@ -98,7 +92,6 @@ exports.obtenerUsuariosPorNombre = async (req, res) => {
   }
 };
 
-/* ---------- PUT /api/usuarios/:id/contrasena ---------- */
 exports.actualizarContrasena = async (req, res) => {
   const { id } = req.params;
   const { nuevaContrasena, codigoVerificacion } = req.body;
