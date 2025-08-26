@@ -104,13 +104,12 @@ exports.obtenerVisitasActivas = async (_req, res) => {
 
 exports.obtenerVisitasDelDia = async (_req, res) => {
   try {
-    const ahora = new Date();
-
-    const yyyy = ahora.getFullYear();
-    const mm = String(ahora.getMonth() + 1).padStart(2, "0");
-    const dd = String(ahora.getDate()).padStart(2, "0");
-
-    const fechaHoy = `${yyyy}-${mm}-${dd}`; // ejemplo: "2025-07-16"
+    const fechaHoy = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Guayaquil",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
 
     const visitas = await Visita.findAll({
       where: { fecha: fechaHoy },
