@@ -27,8 +27,8 @@ const Visita = sequelize.define(
     },
     fecha: {
       type: DataTypes.DATEONLY,
-      allowNull: true,
-      defaultValue: DataTypes.NOW,
+      allowNull: false,
+      defaultValue: sequelize.literal("CURRENT_DATE"),
     },
     hora_ingreso: {
       type: DataTypes.TIME,
