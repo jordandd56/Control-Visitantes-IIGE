@@ -138,7 +138,15 @@ export default function ControlVisitasVisual() {
   const [aQuienVisita, setAQuienVisita] = useState("");
   const [motivo, setMotivo] = useState("");
 
-  const [registradoPor] = useState(38); // id de usuario que registra
+  const usuarioSesion = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("cv:user"));
+    } catch {
+      return null;
+    }
+    })();
+
+  const [registradoPor, setRegistradoPor] = useState(usuarioSesion?.id ?? null);
   const [mensaje, setMensaje] = useState("");
 
   // Errores UI

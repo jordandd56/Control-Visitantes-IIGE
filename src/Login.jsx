@@ -35,6 +35,7 @@ function Login() {
       }
 
       const data = await response.json();
+      localStorage.setItem("cv:user", JSON.stringify(data.usuario));
       navigate("/inicio");
     } catch (err) {
       setMensajeError("Error al conectar con el servidor");
