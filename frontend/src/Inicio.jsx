@@ -23,7 +23,7 @@ const API_BASE_VISITANTES =
 const API_BASE_AREAS =
   "https://mi-backend-nodejs-c0d5dre0cwgughb4.centralus-01.azurewebsites.net/api/areas";
 
-/* ------------------------------ Helpers ------------------------------ */
+/*  Helpers - */
 const normalizarVisita = (v) => {
   let estadoUI = "Pendiente";
   if (v.estado === "ingreso") {
@@ -34,25 +34,18 @@ const normalizarVisita = (v) => {
     estadoUI = "Rechazado";
   }
 
-  // ── Documento cédula
-  const ced = v?.Visitante?.cedula ?? null;
-  const pas = v?.Visitante?.pasaporte ?? null;
-  const documento = ced ?? pas ?? null;
-  const documentoLabel = ced ? "Cédula" : pas ? "Pasaporte" : null;
+  
 
   return {
     id: v.id,
 
     // Visitante
     nombre: v.Visitante?.nombres ?? "-",
+    cedula: v.Visitante?.cedula ?? "-",
     empresa: v.Visitante?.empresa ?? "-",
     contacto: v.Visitante?.contacto ?? "-",
 
-    // Guarda también crudos por si los necesitas
-    cedula: ced || "",
-    pasaporte: pas || "",
-    documento,
-    documentoLabel,
+
 
     // Visita
     motivo: v.motivo,
@@ -243,7 +236,7 @@ export default function ControlVisitasVisual() {
     }
   };
 
-  /* ----------------------- Agregar visitante (nuevo) ----------------------- */
+  /*  Agregar visitante (nuevo)- */
   const agregarVisitante = async (nombres, empresa, contacto) => {
     setMensaje("");
     const e = { ...errors };
@@ -296,7 +289,7 @@ export default function ControlVisitasVisual() {
     }
   };
 
-  /* ---------------------------- Crear visita ---------------------------- */
+  /*  Crear visita */
   const crearVisita = async () => {
     setMensaje("");
 
@@ -672,7 +665,7 @@ export default function ControlVisitasVisual() {
   );
 }
 
-/* ============================ Subcomponentes ============================ */
+/* Subcomponentes  */
 
 const Card = ({ icon, color, label, value }) => (
   <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
@@ -929,14 +922,14 @@ const ModalVisita = ({ detalle, onClose }) => {
         </button>
         <h2 className="text-indigo-700 text-2xl font-bold mb-2">{r.nombre}</h2>
         <p className="mb-1">
+          <b>Cedula:</b> {r.cedula}
+        </p>
+        <p className="mb-1">
           <b>Empresa:</b> {r.empresa}
         </p>
         <p className="mb-1">
           <b>Contacto:</b> {r.contacto}
         </p>
-        
-      
-       
         <p className="mb-1">
           <b>Motivo:</b> {r.motivo}
         </p>
