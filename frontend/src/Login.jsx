@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import imgLogin from "./assets/imgLogin.png";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -47,11 +46,11 @@ function Login() {
     <>
       {/* Contenedor principal del formulario de login */}
       <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-indigo-50 to-blue-500">
-       
+        {/* Imagen */}
         <div className="md:w-1/2 w-full flex justify-center items-center p-4">
           <img
-            src={imgLogin}
-            alt="Instituto de investigación"
+            src="/imgLogin.png"
+            alt="Login"
             className="w-[90%] h-auto object-cover rounded-2xl shadow-2xl"
           />
         </div>
