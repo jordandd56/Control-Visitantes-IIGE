@@ -9,6 +9,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     dialect: "postgres",
     port: process.env.DB_PORT,
+    logging: false,
     dialectOptions: {
       ssl: {
         require: true,
@@ -17,5 +18,9 @@ const sequelize = new Sequelize(
     },
   }
 );
+
+sequelize.addHook("afterConnect", async (connection) => {
+  await connection.query(`SET TIME ZONE 'America/Guayaquil'`);
+});
 
 module.exports = sequelize;
